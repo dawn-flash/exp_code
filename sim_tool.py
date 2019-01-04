@@ -826,9 +826,8 @@ def plotResult(plot_data=[],FILENAME={},file=False, plot_alg="ALL"):
     '''
     ALG = []
     if plot_alg == "ALL":
-        # ALG = ["ALT", "RNJ", "T-test", "HTE"]
+        ALG = ["ALT", "RNJ", "T-test", "HTE"]
         # ALG = ["ALT","RNJ","T-test"]
-        ALG = ["ALT", "RNJ"]
         ALG_line = ["x-",".-","o-","v-"]
     if plot_alg != "ALL":
         for alg in plot_alg.split("|"):
@@ -836,7 +835,7 @@ def plotResult(plot_data=[],FILENAME={},file=False, plot_alg="ALL"):
     if file:
         ##获取文件长度
         lenght = FILENAME["len"]
-        PATHNUM = [i + 5 for i in range(int(lenght/100))]
+        PATHNUM = [i + 3 for i in range(int(lenght/100))]
         ##画精度图
         fig = plt.subplot()
         for alg in ALG:
@@ -1135,9 +1134,8 @@ def evaluation(data_dir,flag = False):
     ##记录文件地址
     FILENAME = {
     }
-    # ALG = ["ALT", "RNJ", "T-test", "HTE"]
+    ALG = ["ALT", "RNJ", "T-test", "HTE"]
     # ALG = ["ALT", "RNJ", "T-test"]
-    ALG = ["ALT", "RNJ"]
     for alg in ALG:
         FILENAME[alg]={}
         filename1 = data_dir+"/"+alg+"/inferredE_"+alg
@@ -1183,8 +1181,8 @@ def doSim(data_dir,getMetric,flag=False):
     :return:
     '''
     if(flag):##推断
-        # ALG = ["ALT", "RNJ", "T-test"]
-        ALG = ["ALT", "RNJ"]
+        ALG = ["ALT", "RNJ", "T-test","HTE"]
+        # ALG = ["ALT", "RNJ"]
         # ALG = ["HTE"]
         for alg in ALG:
             filename = data_dir+"/"+alg+"/"+"inferredE_"+alg  ##清理一下
@@ -1206,7 +1204,7 @@ def doSim(data_dir,getMetric,flag=False):
                         ##处理文件
                         R = getLeafNodes(VTree)
                         S = getMetric(filename,len(R),200,200)
-                        e = 0.0005
+                        e = 0.00038
                         inferredE = RNJ(R,S,e)
                         filename1 = data_dir+"/"+alg+"/inferredE_"+alg
                         open(filename1,"a+").write(str(inferredE)+"\n")
@@ -1215,7 +1213,7 @@ def doSim(data_dir,getMetric,flag=False):
                         R = getLeafNodes(VTree)
                         S = getMetric(filename,len(R))
                         if alg == "ALT":
-                            e = 0.0005
+                            e = 0.00038
                             inferredBE,dotS = ALT(S,R)
                             inferredE = prune(inferredBE,dotS,R,e)
                             filename2 = data_dir + "/" +alg+ "/inferredE_" + alg

@@ -123,7 +123,7 @@ def calDelayCov(dir="/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/end_to_
     计算路径时延，链路时延，计算路径协方差，计算链路方差，分别保存文件
     :return:
     '''
-    sharePathNum = [1, 2, 3, 4, 5, 6, 7, 8]
+    sharePathNum = [2]
     for sPN in sharePathNum:
         data_dir = dir + load + "/" + str(sPN)
         ##若存在文件则删除
@@ -135,6 +135,7 @@ def calDelayCov(dir="/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/end_to_
             os.remove(filename2)
         for cnt in range(100):
             filename = data_dir + "/" + load + str(sPN) + "_" + str(cnt) + ".tr"
+            print(filename)
             if os.path.exists(filename):
                 data1 = getPathDelay("10.1.1.1", "10.1." + str(2 + sPN) + ".2", filename, 1)
                 data2 = getPathDelay("10.1.1.1", "10.1." + str(4 + sPN) + ".2", filename, 2)
@@ -142,16 +143,24 @@ def calDelayCov(dir="/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/end_to_
                 pathDelay2 = data2["delay"]
                 rec_id1 = data1["rec_id"]
                 rec_id2 = data2["rec_id"]
-                hatLinkDelay1 = []
+                ## 注：pathDelay中的顺序对应着rec_id
+                hatLinkDelay1 = [] ##记录所有包时延，丢失时间按2倍的往返时延计算
                 hatLinkDelay2 = []
-                succ12 = 0
-                for id in rec_id1:
-                    if id in rec_id2:
-                        index1 = rec_id1.index(id)
-                        index2 = rec_id2.index(id)
-                        hatLinkDelay1.append(pathDelay1[index1])
-                        hatLinkDelay2.append(pathDelay2[index2])
-                        succ12+=1
+                for i in range(1000):
+                    if i in rec_id1:
+                        hatLinkDelay1.append(pathDelay1[rec_id1.index(i)])
+                    if i not in rec_id1:
+                        hatLinkDelay1.append(2*0.02*(sPN+2))
+                    if i in rec_id2:
+                        hatLinkDelay2.append(pathDelay2[rec_id2.index(i)])
+                    if i not in rec_id2:
+                        hatLinkDelay2.append(2*0.02*(sPN+2))
+                # for id in rec_id1:
+                #     if id in rec_id2:
+                #         index1 = rec_id1.index(id)
+                #         index2 = rec_id2.index(id)
+                #         hatLinkDelay1.append(pathDelay1[index1])
+                #         hatLinkDelay2.append(pathDelay2[index2])
                 pathDelayCov = Covariance_way2(hatLinkDelay1, hatLinkDelay2)
                 pathDelay = [hatLinkDelay1,hatLinkDelay2]
                 open(filename1,"a+").write(str(pathDelayCov)+'\n')
@@ -161,24 +170,25 @@ def calDelayCov(dir="/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/end_to_
                 for i in range(sPN):
                     if i == 0:
                         LinkDelay.append(getLinkDelay("10.1.1.1", ["10.1." + str(2 + sPN) + ".2", "10.1." + str(4 + sPN) + ".2"], filename, 0, 3)["linkDelay"])
+                        LinkDelay[-1].extend([2*0.02*(sPN+2) for i in range(2000-len(LinkDelay[-1]))])
                     else:
                         LinkDelay.append(getLinkDelay("10.1.1.1", ["10.1." + str(2 + sPN) + ".2", "10.1." + str(4 + sPN) + ".2"], filename, i+2, i+3)["linkDelay"])
+                        LinkDelay[-1].extend([2 * 0.02 * (sPN + 2) for i in range(2000 - len(LinkDelay[-1]))])
                 linkDelayCov = []
                 for linkdelay in LinkDelay:
                     linkDelayCov.append(Covariance_way2(linkdelay,linkdelay))
                 filename4 = data_dir + "/linkDelay" + str(sPN) + "_" + str(cnt)
-                # np.savetxt(filename4,LinkDelay)
                 open(filename4,"w").write(str(LinkDelay)+"\n")
                 open(filename2,"a+").write(str(linkDelayCov)+"\n")
-                filename5 = data_dir + "/succ" + str(sPN) + "_" + str(cnt)
-                open(filename5,"a+").write(str(len(rec_id1)/1000)+"\n"+str(len(rec_id2)/1000)+"\n"+str(succ12/1000)+"\n")
 
-def calInterarrival(dir="/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/end_to_end/sandwich/",load="light_load"):
-    sharePathNum = [6,8]
+
+def calInterarrival(dir="/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/end_to_end/sandwich/",load="heavy_load"):
+    sharePathNum = [1,2,4,6,8]
     for sPN in sharePathNum:
         data_dir = dir + load +"/"+ str(sPN)
         for cnt in range(100):
             filename = data_dir + "/" + load + str(sPN) + "_" + str(cnt) + ".tr"
+            print(filename)
             src = "10.1.1.1"
             dest = "10.1." + str(2 + sPN) + ".2"
             node = 1
@@ -396,10 +406,16 @@ def get_sandwich(data_dir,load):
             lines = open(filename,"r").readlines()
             Interarrival.append(float(lines[np.random.randint(0,len(lines))]))
         curve.append(np.mean(Interarrival)-0.02)
+        # curve.append(np.log(np.mean(Interarrival) - 0.02))
     return curve
 def plot_sandwich(data_dir):
-    LOAD = ["light_load","medium_load",]
-    LABEL = ["9%|0","40%|0","75%|4%"]
+    '''
+    plot end to end measurement of sandwich probing
+    :param data_dir:
+    :return:
+    '''
+    LOAD = ["no_traffic","light_load","medium_load","heavy_load"]
+    LABEL = ["no_traffic","9%|0","40%|0","75%|<1%"]
     PATHNUM = [1,2,3,4,5,6,7,8]
     for load in LOAD:
         curve = get_sandwich(data_dir,load)
@@ -410,17 +426,225 @@ def plot_sandwich(data_dir):
         plt.plot(PATHNUM, curve, 'o-', label=label)
         # for a, b in zip(PATHNUM, K):
         #     plt.text(a, b, (a, b), ha='center', va='bottom', fontsize=3)
-    curve = [0.00075*(i+1) for i in range(8)]
-    fig1 = plt.subplot()
-    plt.xlabel('sharedLinkNum')
-    plt.ylabel('sharedPathDistance')
-    label = "no background traffic"
-    plt.plot(PATHNUM, curve, 'o-', label=label,color="b")
 
     plt.grid(True)
     plt.legend(bbox_to_anchor=(1.0, 1), loc=1, borderaxespad=0.)
     plt.title('Sandwich Probing(interarrival time)', loc='center')
     plt.show()
+
+def get_b2b(data_dir, load):
+    '''
+    得到背靠背包的cov(a,b),和sum_{X(a)}
+    :return:
+    '''
+    curve1 = [] ##cov(a,b)
+    curve2 = [] ##sum_{X(a)}
+    PATHNUM = [1, 2, 3, 4, 5, 6, 7, 8]
+    # PATHNUM = [1]
+    for pathNum in PATHNUM:
+        filename1 = data_dir+"/"+load+"/"+str(pathNum)+"/pathDelayCov"+str(pathNum)
+        if os.path.exists(filename1):
+            curve1.append(np.loadtxt(filename1).mean())
+        else: ## 待会删掉
+            cov = []
+            for c in range(100):
+                filename3 = data_dir+"/"+load+"/"+str(pathNum)+"/pathDelay"+str(pathNum)+"_"+str(c)
+                pathDelay = np.loadtxt(filename3)
+                cov.append(Covariance_way2(pathDelay[0],pathDelay[1]))
+            curve1.append(np.mean(cov))
+        filename2 = data_dir+"/"+load+"/"+str(pathNum)+"/linkDelayCov"+str(pathNum)
+        if os.path.exists(filename2):
+            linkDelay = []
+            lines = open(filename2,'r').readlines()
+            for line in lines:
+                linkDelay.append(np.sum(ast.literal_eval(line)))
+            curve2.append(np.mean(linkDelay))
+        else:
+            curve2.append(4.3e-08)
+
+    return curve1,curve2
+
+def plot_b2b(data_dir):
+    '''
+    plot end to end measurement of back to back probing
+    :param data_dir:
+    :return:
+    '''
+    LOAD = ["light_load", "medium_load", "heavy_load"]
+    # LOAD = ["heavy_load"]
+    LABEL = ["9%|0", "40%|0", "75%|1%"]
+    # LABEL = ["75%|1%"]
+    PATHNUM = [1, 2, 3, 4, 5, 6, 7, 8]
+    # PATHNUM = [1]
+    for load in LOAD:
+        curve1,curve2 = get_b2b(data_dir, load)
+        fig = plt.subplots()
+        plt.xlabel('sharedLinkNum')
+        plt.ylabel('sharedPathDistance')
+        label = LABEL[LOAD.index(load)]
+        plt.plot(PATHNUM, curve1, 'o-', label="Covariance")
+        plt.plot(PATHNUM,curve2,'x-',label="Sum Variance")
+        plt.legend(bbox_to_anchor=(1.0, 1), loc=1, borderaxespad=0.)
+        plt.title(label)
+        plt.show()
+        plt.close()
+        print(np.array(curve2)-np.array(curve1))
+
+
+def get_loss(data_dir,load):
+    curve1 = []##真实公共路径传输率
+    curve2 = []##计算出来的公共路径传输率
+    PATHNUM = [1, 2, 3, 4, 5, 6, 7, 8]
+    for pathNum in PATHNUM:
+        loss1 = []
+        loss2 = []
+        for c in range(100):
+            filename = data_dir + "/" + load + "/" + str(pathNum) + "/" + "result" + str(pathNum) + "_" + str(c)
+            result = np.loadtxt(filename)
+            loss1.append(result[3])
+            loss2.append(result[0]*result[1]/result[2])
+        curve1.append(np.mean(loss1))
+        curve2.append(np.mean(np.array(loss2)))
+    return curve1,curve2
+
+def plot_loss(data_dir):
+    LOAD = ["heavy_load1", "heavy_load2", "heavy_load3"]
+    LABEL = ["75%|1%", "80%%|2%", "85%|4%"]
+    PATHNUM = [1, 2, 3, 4, 5, 6, 7, 8]
+    Diff = []
+    for load in LOAD:
+        curve1,curve2 = get_loss(data_dir, load)
+        Diff.append(list(np.array(curve1)-np.array(curve2)))
+        fig1 = plt.subplot()
+        plt.xlabel('sharedLinkNum')
+        plt.ylabel('sharedPathDistance')
+        label = LABEL[LOAD.index(load)]
+        plt.plot(PATHNUM, curve1, 'o-', label=label+"(real value)",c="blue")
+        plt.plot(PATHNUM, curve2, 'o-', label=label+"(calculated value)",c="red")
+        plt.grid(True)
+        plt.legend(bbox_to_anchor=(1.0, 1), loc=1, borderaxespad=0.)
+        plt.title('loss probing(successful transmit rate)', loc='center')
+        plt.show()
+        plt.close()
+
+    fig2 = plt.subplot()
+    plt.xlabel('sharedLinkNum')
+    plt.ylabel('sharedPathDistance')
+    for load in LOAD:
+        label = LABEL[LOAD.index(load)]
+        index = LOAD.index(load)
+        plt.plot(PATHNUM,Diff[index],"x-",label=label)
+
+    plt.grid(True)
+    plt.legend(bbox_to_anchor=(1.0, 1), loc=1, borderaxespad=0.)
+    plt.title('loss probing(successful transmit rate)', loc='center')
+    plt.show()
+    plt.close()
+
+def get_sandwichwithdot(data_dir,load):
+    '''
+    计算三明治一种负载下的曲线,点
+    :param data_dir:
+    :param load:
+    :return:
+    '''
+    curve = []
+    PATHNUM = [1, 2, 3, 4, 5, 6, 7, 8]
+    for pathNum in PATHNUM:
+        Interarrival = []
+        for c in range(100):
+            filename = data_dir +"/"+load+"/"+str(pathNum)+"/"+"Interarrival"+str(pathNum)+"_"+str(c)
+            lines = open(filename,"r").readlines()
+            Interarrival.append(float(lines[np.random.randint(0,len(lines))])-0.02)
+        # curve.append(np.mean(Interarrival)-0.02)
+        # curve.append(np.log(np.mean(Interarrival) - 0.02))
+        curve.append(Interarrival)
+    return curve
+
+def plot_sandwichwithdot(data_dir):
+    '''
+    plot end to end measurement of sandwich probing
+    :param data_dir:
+    :return:
+    '''
+    LOAD = ["no_traffic","light_load","medium_load","heavy_load"]
+    # LOAD = ["light_load", "medium_load", "heavy_load"]
+    LABEL = ["no_traffic","9%|0","40%|0","75%|<1%"]
+    # LABEL = ["9%|0", "40%|0", "75%|<1%"]
+    PATHNUM = [1,2,3,4,5,6,7,8]
+    for load in LOAD:
+        curve1 = get_sandwich(data_dir,load)
+        curve2 = get_sandwichwithdot(data_dir,load)
+        fig1 = plt.subplot()
+        plt.xlabel('sharedLinkNum')
+        plt.ylabel('sharedPathDistance')
+        label = LABEL[LOAD.index(load)]
+        plt.plot(PATHNUM, curve1, 'o-', label=label,c="blue")
+        for pathnum in PATHNUM:
+            for interval in curve2[PATHNUM.index(pathnum)]:
+                plt.scatter(pathnum,interval,marker=".",c="red")
+        # for a, b in zip(PATHNUM, K):
+        #     plt.text(a, b, (a, b), ha='center', va='bottom', fontsize=3)
+        plt.grid(True)
+        plt.legend(bbox_to_anchor=(1.0, 1), loc=1, borderaxespad=0.)
+        plt.title('Sandwich Probing(interarrival time)', loc='center')
+        plt.show()
+def plot_b2b_2(data_dir):
+    '''
+        plot end to end measurement of back to back probing
+        version2
+        :param data_dir:
+        :return:
+        '''
+    LOAD = ["light_load", "medium_load", "heavy_load"]
+    LABEL = ["9%|0", "40%|0", "75%|1%"]
+    PATHNUM = [1, 2, 3, 4, 5, 6, 7, 8]
+    for load in LOAD:
+        curve1, curve2 = get_b2b_2(data_dir, load)
+        fig = plt.subplots()
+        plt.xlabel('sharedLinkNum')
+        plt.ylabel('sharedPathDistance')
+        label = LABEL[LOAD.index(load)]
+        plt.plot(PATHNUM, curve1, 'o-', label="Covariance")
+        plt.plot(PATHNUM, curve2, 'x-', label="Sum Variance")
+        plt.legend(bbox_to_anchor=(1.0, 1), loc=1, borderaxespad=0.)
+        plt.title(label)
+        plt.show()
+        plt.close()
+
+def get_b2b_2(data_dir, load):
+    '''
+    得到背靠背包的cov(a,b),和sum_{X(a)}
+    version2
+    :return:
+    '''
+    curve1 = [] ##cov(a,b)
+    curve2 = [] ##sum_{X(a)}
+    PATHNUM = [1, 2, 3, 4, 5, 6, 7, 8]
+    for pathNum in PATHNUM:
+        filename1 = data_dir+"/"+load+"/"+str(pathNum)+"/pathDelayCov"+str(pathNum)
+        cov = []
+        for c in range(100):
+            filename3 = data_dir+"/"+load+"/"+str(pathNum)+"/pathDelay"+str(pathNum)+"_"+str(c)
+            pathDelay = np.loadtxt(filename3)
+            pathDelay = list(pathDelay)
+            pathDelay[0] = list(pathDelay[0])
+            pathDelay[1] = list(pathDelay[1])
+            assert isinstance(pathDelay,list)
+            pathDelay[0].extend([(pathNum + 2) * 0.02 * 2 for i in range(1000 - len(pathDelay[0]))])
+            pathDelay[1].extend([(pathNum + 2) * 0.02 * 2 for i in range(1000 - len(pathDelay[1]))])
+            cov.append(Covariance_way2(pathDelay[0],pathDelay[1]))
+        curve1.append(np.mean(cov))
+
+        filename2 = data_dir+"/"+load+"/"+str(pathNum)+"/linkDelayCov"+str(pathNum)
+        linkDelay = []
+        lines = open(filename2,'r').readlines()
+        for line in lines:
+            linkDelay.append(np.sum(ast.literal_eval(line)))
+        curve2.append(np.mean(linkDelay))
+
+    return curve1,curve2
+
 
 if __name__ == "__main__":
     # srcIP = "10.1.1.1"
@@ -430,10 +654,16 @@ if __name__ == "__main__":
     # data = getPathDelay(srcIP,destIp,filename,destnode)
     # print(data)
     # calInterarrival(load="heavy_load")
-    # calDelayCov()
+    calDelayCov()
     # pass
     # getLossInfo("/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/end_to_end/loss_rate/heavy_load-1","heavy_load-1")
     # getLossInfo("/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/end_to_end/loss_rate/heavy_load-2", "heavy_load-2")
     # getLossInfo("/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/end_to_end/loss_rate/heavy_load-3", "heavy_load-3")
     # plot_sandwich("/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/end_to_end/sandwich")
-    calLossRate("/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/end_to_end/loss_rate/heavy_load-2","heavy_load-2")
+    # calLossRate("/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/end_to_end/loss_rate/heavy_load-2","heavy_load-2")
+    # plot_b2b("/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/end_to_end/back-to-back")
+    # calInterarrival(load="no_traffic")
+    # plot_sandwich("/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/end_to_end/sandwich")
+    # plot_loss()
+    # plot_sandwichwithdot("/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/end_to_end/sandwich")
+    # plot_loss("/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/end_to_end/loss_rate")

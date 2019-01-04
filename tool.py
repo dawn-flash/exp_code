@@ -944,11 +944,5 @@ def getVTrees(filename="/home/zongwangz/PycharmProjects/Topo_4_3_10"):
             VTrees.append(VTree)
     return VTrees
 
-def data_test(x):
-    '''
-    对数据进行检验
-    :return:
-    '''
-    print(stats.kstest(x,'norm'))
 if __name__ == "__main__":
     pass

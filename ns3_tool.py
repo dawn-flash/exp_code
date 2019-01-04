@@ -10,6 +10,7 @@ from scipy.stats import norm
 from matplotlib import mlab
 from scipy.stats import kstest
 from scipy.stats import lognorm
+import scipy.stats as stats
 def getPathDelay(srcIP, destIp,filename,destnode):
     '''
     从一个trace文件中得到一条路径上的所有包的delay，记录得到的包id
@@ -1206,38 +1207,6 @@ def lastPacketTime(filename="",sourceNode=0,destNode1=1,destNode2=2,sourceIP = "
     print(lastpacketId1,lastpacketId2)
 
 
-def drawNormHist(X,xlabel="",ylabel="",title=""):
-    #创建直方图
-    fig1 = plt.subplot()
-    weights = np.ones_like(X)/float(len(X))
-    bins = plt.hist(X,1000,cumulative=True)[1]
-    mu,sigma = norm.fit(X)
-    # y = mlab.normpdf(bins,mu,sigma)
-    # plt.plot(bins,y,"r--")
-
-    # plt.plot(X,norm.pdf(X,mu,sigma))
-    print("均值: ",mu)
-    plt.xlabel(xlabel)
-    plt.ylabel(ylabel)
-    plt.title(title)
-    plt.show()
-    plt.close()
-    print("norm: ",kstest(X,'norm'))
-    print("expon",kstest(X,"expon"))
-
-def getNormData(probe_way="sandwich",load="light_load"):
-    x = []
-    data_dir = "/media/zongwangz/RealPAN-13438811621/myUbuntu/data/"+probe_way+"/"+load+"/"+str(8)
-    for i in range(100):
-        filename = data_dir+"/Interval"+str(8)+"_"+str(i)
-        if i == 0:
-
-            x = list(np.loadtxt(filename))
-        else:
-            temp = list(np.loadtxt(filename))
-            x.extend(temp)
-    x = np.array(x)
-    return x
 
 
 def dosomething():
@@ -1259,51 +1228,51 @@ def dosomething():
     plt.title("sandwich probing")
     plt.legend()
     plt.show()
-def test_2(filename="/media/zongwangz/RealPAN-13438811621/myUbuntu/ns3_workspace/NS3/test_2.tr"):
-    '''
-    用来测试是否正确的随机发送包
-    :param filename:
-    :return:
-    '''
-    cntNode1 = 0
-    cntNode2 = 0
-    cntNode3 = 0
-    node1 = []
-    node2 = []
-    node3 = []
-    with open(filename,'r') as f:
-        lines = f.readlines()
-        for line in lines:
-            oc = re.split(r"\)|\(| ",line)
-            action = oc[0]
-            time = float(oc[1])
-            namespace = oc[2]
-            currentNode = int(namespace.split("/")[2])
-            packet_id = int(oc[23])
-            src_ip = oc[35]
-            dest_ip = oc[37]
-            src_port = oc[43]
-            dest_port = oc[45]
-            if currentNode == 0 and action == "-":
-                if dest_ip == "10.4.1.2":
-                    cntNode1 += 1
-                if dest_ip == "10.4.2.2":
-                    cntNode2 += 1
-                if dest_ip == "10.4.3.2":
-                    cntNode3 += 1
-            if currentNode == 1 and action == "r":
-                node1.append(packet_id)
-                print("Node 1 receive a packet:",packet_id)
-            if currentNode == 2 and action == "r":
-                node2.append(packet_id)
-                print("Node 2 receive a packet:",packet_id)
-            if currentNode == 3 and action == "r":
-                node3.append(packet_id)
-                print("Node 3 receive a packet:",packet_id)
-    print("node0 send",cntNode1,cntNode2,cntNode3)
-    print("node1 receive:",node1)
-    print("node2 receive:", node1)
-    print("node3 receive:", node1)
+# def test_2(filename="/media/zongwangz/RealPAN-13438811621/myUbuntu/ns3_workspace/NS3/test_2.tr"):
+#     '''
+#     用来测试是否正确的随机发送包
+#     :param filename:
+#     :return:
+#     '''
+#     cntNode1 = 0
+#     cntNode2 = 0
+#     cntNode3 = 0
+#     node1 = []
+#     node2 = []
+#     node3 = []
+#     with open(filename,'r') as f:
+#         lines = f.readlines()
+#         for line in lines:
+#             oc = re.split(r"\)|\(| ",line)
+#             action = oc[0]
+#             time = float(oc[1])
+#             namespace = oc[2]
+#             currentNode = int(namespace.split("/")[2])
+#             packet_id = int(oc[23])
+#             src_ip = oc[35]
+#             dest_ip = oc[37]
+#             src_port = oc[43]
+#             dest_port = oc[45]
+#             if currentNode == 0 and action == "-":
+#                 if dest_ip == "10.4.1.2":
+#                     cntNode1 += 1
+#                 if dest_ip == "10.4.2.2":
+#                     cntNode2 += 1
+#                 if dest_ip == "10.4.3.2":
+#                     cntNode3 += 1
+#             if currentNode == 1 and action == "r":
+#                 node1.append(packet_id)
+#                 print("Node 1 receive a packet:",packet_id)
+#             if currentNode == 2 and action == "r":
+#                 node2.append(packet_id)
+#                 print("Node 2 receive a packet:",packet_id)
+#             if currentNode == 3 and action == "r":
+#                 node3.append(packet_id)
+#                 print("Node 3 receive a packet:",packet_id)
+#     print("node0 send",cntNode1,cntNode2,cntNode3)
+#     print("node1 receive:",node1)
+#     print("node2 receive:", node1)
+#     print("node3 receive:", node1)
 def mean_delay(data_dir = "/media/zongwangz/RealPAN-13438811621/myUbuntu/data/zero_mean"):
     '''
     看看重载下 无背景流量 有背景流量（数据量少）  有背景流量（数据量多）的情况下，到达时间差曲线
@@ -1355,27 +1324,107 @@ def mean_delay_0():
     plt.show()
     print(P1-P3)
 
-def test_0():
+# def test_0():
+#     '''
+#     过滤得到纯UdpclientServer发送的包
+#     :return:
+#     '''
+#     filename1 = "/media/zongwangz/RealPAN-13438811621/myUbuntu/ns3_workspace/NS3/heavy_load8_0.tr"
+#     filename2 = "/home/zongwangz/PycharmProjects/temp"
+#     f = open(filename1,"r")
+#     while True:
+#         line = f.readline()
+#         if line:
+#             oc = re.split(r"\)|\(| ", line)
+#             if oc[47] == "ns3::SeqTsHeader":
+#                 open(filename2,"a+").write(line+"\n")
+#         else:
+#             break
+
+def print_trace(filename,pid,srcIP,destIP):
     '''
-    过滤得到纯UdpclientServer发送的包
+    输出一条流上某个包的trace
+    :param filename:
+    :param pid:
     :return:
     '''
-    filename1 = "/media/zongwangz/RealPAN-13438811621/myUbuntu/ns3_workspace/NS3/heavy_load8_0.tr"
-    filename2 = "/home/zongwangz/PycharmProjects/temp"
-    f = open(filename1,"r")
-    while True:
-        line = f.readline()
-        if line:
-            oc = re.split(r"\)|\(| ", line)
-            if oc[47] == "ns3::SeqTsHeader":
-                open(filename2,"a+").write(line+"\n")
+    with open(filename,'r') as f:
+        lines = f.readlines()
+        for line in lines:
+            oc = re.split(r"\)|\(| ",line)
+            action = oc[0]
+            time = float(oc[1])
+            namespace = oc[2]
+            packet_id = int(oc[23])
+            src_ip = oc[35]
+            dest_ip = oc[37]
+            src_port = oc[43]
+            dest_port = oc[45]
+            if src_ip == srcIP and dest_ip == destIP and packet_id == pid:
+                print(line)
+
+
+
+def data_test(data_dir="/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/end_to_end/sandwich/light_load/4"):
+    '''
+    对数据进行检验
+    :return:
+    '''
+    Interval = []
+    for c in range(15):
+        filename = data_dir+"/Interarrival"+str(4)+"_"+str(c)
+        Interval.extend(np.loadtxt(filename))
+    Interval = np.array(Interval)-0.02
+    print("gennorm,fit:",stats.gennorm.fit(Interval))
+    # print("norm,fit:",stats.norm.fit(Interval))
+    print(stats.kstest(Interval,"gennorm", stats.gennorm.fit(Interval)))
+    # print(stats.kstest(np.random.normal(size=10000),"norm"))
+    print(stats.kstest(stats.gennorm.rvs(0.09314101803056898, 0.0029226548367247366, 4.436697298783252e-17,size=200),"gennorm",stats.gennorm.fit(stats.gennorm.rvs(0.09314101803056898, 0.0029226548367247366, 4.436697298783252e-17,size=200))))
+
+def drawNormHist(X,xlabel="",ylabel="",title=""):
+    #创建直方图
+    X = np.array(X)
+    fig1 = plt.subplot()
+    plt.hist(X,bins='auto')
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.title(title)
+    plt.show()
+    plt.close()
+
+    # mu,sigma = norm.fit(X)
+    # print("均值: ",mu,"标准差: ",sigma)
+    #
+    # beta,loc,scale = stats.gennorm.fit(X)
+    # print("shape: ",beta, "location: ", loc,"scale: ", scale)
+    # print("norm: ",kstest(X,'norm',(mu,sigma)))
+    # print("gennorm: ",kstest(X,"gennorm",(beta,loc,scale)))
+
+def getNormData(probe_way="sandwich",load="light_load"):
+    x = []
+    data_dir = "/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/end_to_end/"+probe_way+"/"+load+"/"+str(8)
+    for i in range(100):
+        filename = data_dir+"/Interarrival"+str(8)+"_"+str(i)
+        if i == 0:
+
+            x = list(np.loadtxt(filename))
         else:
-            break
+            temp = list(np.loadtxt(filename))
+            x.extend(temp)
+    x = np.array(x)
+    return x
+
+
 if __name__ == "__main__":
     # test_2("/media/zongwangz/RealPAN-13438811621/myUbuntu/ns3_workspace/NS3/test_3.tr")
     # plotB2BCOV()
     # data = getPathDelay("10.1.1.1","10.1.3.2","/media/zongwangz/RealPAN-13438811621/myUbuntu/ns3_workspace/NS3/medium_load1_0.tr",1)
     # print(data)
     # calCovByB2B()
-    calSandWich()
-    plot_sandwich_part()
+    # calSandWich()
+    # plot_sandwich_part()
+    # plotSandwichWithDot()
+    # plot_loss()
+    # print_trace("/media/zongwangz/RealPAN-13438811621/myUbuntu/ns3_workspace/NS3/heavy_load2_0.tr",np.random.randint(0,1000),"10.1.1.1","10.1.4.2")
+    x = getNormData(load="light_load")
+    drawNormHist(x)

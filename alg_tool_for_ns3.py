@@ -100,7 +100,7 @@ def saveS1(S,filename):
 
 def saveS2(S,filename):
     '''
-    just to save the file for back to back path delay
+    just to save the file for back to back path delay or loss
     :param S:
     :param filename:
     :return:
@@ -109,6 +109,7 @@ def saveS2(S,filename):
         open(filename,"a+").write(str(S[key]))
         print(str(S[key]))
         open(filename, "a+").write("\n")
+
 
 
 def calmetric1(filename,VTree,pktnum=200):
@@ -438,7 +439,6 @@ def calmetric2(filename,filename2,VTree,pktnum=2000):
     '''
     return S
 
-
 def calmetric3(filename, filename2, VTree, pktnum=2000,):
     '''
     to caculate success transmit rate of back to back probing from single trace file
@@ -537,20 +537,6 @@ def calmetric3(filename, filename2, VTree, pktnum=2000,):
             else:
                 break
 
-    print(Orders)
-    # record = {
-    #
-    # }
-    #
-    # ##保存计算出来数据
-    # S = {}
-    # for i in R:
-    #     for j in R:
-    #         if j > i:
-    #             key = str(i) + "," + str(j)
-    #             S[key] = []
-    #
-    # return S
     return Orders
 def genSourceEs(data_dir="/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/alg/light_load"):
     '''
@@ -668,12 +654,78 @@ def getMetric2(filename,n,K=2000,Norm=200):
     return S
 
 
-def getMetric3():
+def getMetric3(filename,n,K=2000,Norm=200):
     '''
     for loss rate
     :return:
     '''
-    pass
+    SIJ = []
+    f = open(filename, "r")
+    while True:
+        line = f.readline()
+        if line:
+            sij = ast.literal_eval(line)
+            if len(sij) == K:
+                if K == Norm:
+                    ## 全部求均值
+                    loss1 = 0 ##路径一的成功传输率
+                    loss2 = 0 ##路径二的成功传输率
+                    loss3 = 0 ##路径一和路径二全部成功传输率
+                    for item in sij:
+                        if item[2] == 1:
+                            loss1+=1
+                        if item[3] == 1:
+                            loss2+=1
+                        if item[2] == 1 and item[3] == 1:
+                            loss3+=1
+                    loss1 = loss1/2000
+                    loss2 = loss2/2000
+                    loss3 = loss3/2000
+                    SIJ.append(loss1*loss2/loss3)
+                else:
+                    ##求度均值
+                    temp = []
+                    for i in range(int(K / Norm)):
+                        loss1 = 0  ##路径一的成功传输率
+                        loss2 = 0  ##路径二的成功传输率
+                        loss3 = 0  ##路径一和路径二全部成功传输率
+                        for item in sij[i * Norm:(i + 1) * Norm]:
+                            if item[2] == 1:
+                                loss1 += 1
+                            if item[3] == 1:
+                                loss2 += 1
+                            if item[2] == 1 and item[3] == 1:
+                                loss3 += 1
+                        loss1 = loss1 / 200
+                        loss2 = loss2 / 200
+                        loss3 = loss3 / 200
+                        temp.append(loss1*loss2/loss3)
+                    SIJ.append(temp)
+
+        else:
+            break
+    if K == Norm:
+        S = np.zeros((n, n))
+        index = 0
+        for i in range(n):
+            for j in range(n):
+                if j > i:
+                    S[i][j] = S[j][i] = (SIJ[index] - 0.02)
+                    index = index + 1
+    else:
+        S = {}
+        index = 0
+        for i in range(n):
+            for j in range(n):
+                if j > i:
+                    key = "S" + str(i + 1) + "," + str(j + 1)
+                    if index >= len(SIJ):
+                        print("error")
+                    for k in range(len(SIJ[index])):
+                        SIJ[index][k] = SIJ[index][k] - 0.02
+                    S[key] = SIJ[index]
+                    index = index + 1
+    return S
 
 
 
@@ -682,7 +734,9 @@ if __name__ == "__main__":
     # S = calmetric2("/media/zongwangz/RealPAN-13438811621/myUbuntu/ns3_workspace/NS3/sourceTrace0.tr","/media/zongwangz/RealPAN-13438811621/myUbuntu/ns3_workspace/NS3/order0",[4, 5, 5, 0, 4],2000)
     # calMetrics(calmetric2,saveS2,2000)
     # genSourceEs()
-    doSim("/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/alg/light_load",getMetric,True)
+    doSim("/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/alg/light_load",getMetric,False)
     # pass
-    # calmetric3("/media/zongwangz/RealPAN-13438811621/myUbuntu/ns3_workspace/NS3/sourceTrace0.tr","/media/zongwangz/RealPAN-13438811621/myUbuntu/ns3_workspace/NS3/order0",[4, 5, 5, 0, 4],2000)
-    # calMetrics(calmetric3,saveS2,2000)
+    # S = calmetric3("/media/zongwangz/RealPAN-13438811621/myUbuntu/ns3_workspace/NS3/sourceTrace0.tr","/media/zongwangz/RealPAN-13438811621/myUbuntu/ns3_workspace/NS3/order0",[4, 5, 5, 0, 4],2000)
+    # saveS2(S,"/media/zongwangz/RealPAN-13438811621/myUbuntu/ns3_workspace/NS3/result")
+    # S = getMetric3("/media/zongwangz/RealPAN-13438811621/myUbuntu/ns3_workspace/NS3/result", 3, K=2000, Norm=2000)
+    # print(S)

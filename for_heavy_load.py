@@ -4,6 +4,7 @@
 import os
 import numpy as np
 import re
+import time
 def calLossRate(data_dir,load):
     '''
     计算理论的成功传输率和实际的传输率,存储为文件
@@ -14,13 +15,26 @@ def calLossRate(data_dir,load):
     sharePathNum = [1, 2, 3, 4, 5, 6, 7, 8]
     for sPN in sharePathNum:
         for c in range(100):
-            filename1 = data_dir + "/" + str(sPN) + "/" + load + "-"+ str(sPN) + "_" + str(c) + ".tr"
+            filename1 = data_dir + "/" + load + "-"+ str(sPN) + "_" + str(c) + ".tr"
+            if os.path.exists(data_dir+"/result"+str(sPN)+"_"+str(c)):
+                continue
+            while os.path.exists(filename1) == False:
+                print("waiting for",filename1)
+                time.sleep(60*30)
             if os.path.exists(filename1):
+                if c == 99:
+                    filename2 = data_dir + "/" + load + "-"+ str(sPN+1) + "_" + str(0) + ".tr"
+                else:
+                    filename2 = data_dir  + "/" + load + "-"+ str(sPN) + "_" + str(1+c) + ".tr"
+                while os.path.exists(filename2) == False:
+                    print("waiting for",filename2)
+                    time.sleep(15*60)
                 print("/" + load + str(sPN) + "_" + str(c) + ".tr", "处理中：")
                 info = getSucc(filename1,sPN)
                 print(info)
-                filename = data_dir + "/" + str(sPN) + "/result"+str(sPN)+"_"+str(c)
+                filename = data_dir + "/result"+str(sPN)+"_"+str(c)
                 np.savetxt(filename,info)
+            os.remove(filename1)
     print("完成")
 
 def getSucc(filename,sPN):
@@ -67,4 +81,4 @@ def getSucc(filename,sPN):
     return [len(record["1"])/1000,len(record["2"])/1000,succ12/1000,branchrec/2000]
 
 if __name__ == "__main__":
-    calLossRate("~/data/")
+    calLossRate("/home/zzw/data/heavy_load1","heavy_load-2")
