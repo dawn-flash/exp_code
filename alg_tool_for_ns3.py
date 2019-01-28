@@ -636,7 +636,7 @@ def getMetric2(filename,n,K=2000,Norm=200):
         for i in range(n):
             for j in range(n):
                 if j > i:
-                    S[i][j] = S[j][i] = (SIJ[index] - 0.02)
+                    S[i][j] = S[j][i] = SIJ[index]
                     index = index + 1
     else:
         S = {}
@@ -647,8 +647,6 @@ def getMetric2(filename,n,K=2000,Norm=200):
                     key = "S" + str(i + 1) + "," + str(j + 1)
                     if index >= len(SIJ):
                         print("error")
-                    for k in range(len(SIJ[index])):
-                        SIJ[index][k] = SIJ[index][k] - 0.02
                     S[key] = SIJ[index]
                     index = index + 1
     return S
@@ -728,15 +726,36 @@ def getMetric3(filename,n,K=2000,Norm=200):
     return S
 
 
+def for_test(data_dir="/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/alg/medium_load"):
+    PATHNUM = [3,4,5,6,7,8,9,10]
+    VTrees = getVTrees(data_dir + "/Topo_4_3_10")
+    for serial_number in range(800):
+        pathNum = PATHNUM[int(serial_number / 100)]
+        filename = data_dir+"/"+str(pathNum)+"/Metric"+str(serial_number)
+        lines = open(filename,"r").readlines()
+        SIJ = []
+        for line in lines:
+            sij = ast.literal_eval(line)
+            pathDelay1 = []
+            pathDelay2 = []
+            for item in sij:
+                pathDelay1.append(item[0])
+                pathDelay2.append(item[1])
+            cov = Covariance_way2(pathDelay1, pathDelay2)
+            SIJ.append(cov)
+        print(VTrees[serial_number],SIJ)
 
 
 if __name__ == "__main__":
     # S = calmetric2("/media/zongwangz/RealPAN-13438811621/myUbuntu/ns3_workspace/NS3/sourceTrace0.tr","/media/zongwangz/RealPAN-13438811621/myUbuntu/ns3_workspace/NS3/order0",[4, 5, 5, 0, 4],2000)
     # calMetrics(calmetric2,saveS2,2000)
     # genSourceEs()
-    doSim("/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/alg/light_load",getMetric,False)
+    # doSim("/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/alg/medium_load",getMetric2,True)
     # pass
     # S = calmetric3("/media/zongwangz/RealPAN-13438811621/myUbuntu/ns3_workspace/NS3/sourceTrace0.tr","/media/zongwangz/RealPAN-13438811621/myUbuntu/ns3_workspace/NS3/order0",[4, 5, 5, 0, 4],2000)
     # saveS2(S,"/media/zongwangz/RealPAN-13438811621/myUbuntu/ns3_workspace/NS3/result")
     # S = getMetric3("/media/zongwangz/RealPAN-13438811621/myUbuntu/ns3_workspace/NS3/result", 3, K=2000, Norm=2000)
     # print(S)
+    # S = calmetric("/media/zongwangz/RealPAN-13438811621/myUbuntu/ns3_workspace/NS3/sourceTrace0.tr",[5,5,4,0,4])
+    # print(S)
+    for_test()

@@ -118,15 +118,15 @@ def getLinkDelay(srcIP, destIPList, filename, headNode, tailNode):
     return data
 
 
-def calDelayCov(dir="/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/end_to_end/back-to-back/",load="heavy_load"):
+def calDelayCov(dir="/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/end_to_end/back-to-back/",load="medium_load"):
     '''
     计算路径时延，链路时延，计算路径协方差，计算链路方差，分别保存文件
     :return:
     '''
-    sharePathNum = [2]
+    sharePathNum = [1,2,3,4,5,6,7,8]
     for sPN in sharePathNum:
         data_dir = dir + load + "/" + str(sPN)
-        ##若存在文件则删除
+        #若存在文件则删除
         filename1 = data_dir + "/pathDelayCov" + str(sPN)
         filename2 = data_dir + "/linkDelayCov" + str(sPN)
         if os.path.exists(filename1):
@@ -143,24 +143,22 @@ def calDelayCov(dir="/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/end_to_
                 pathDelay2 = data2["delay"]
                 rec_id1 = data1["rec_id"]
                 rec_id2 = data2["rec_id"]
-                ## 注：pathDelay中的顺序对应着rec_id
+                # 注：pathDelay中的顺序对应着rec_id
                 hatLinkDelay1 = [] ##记录所有包时延，丢失时间按2倍的往返时延计算
                 hatLinkDelay2 = []
-                for i in range(1000):
-                    if i in rec_id1:
-                        hatLinkDelay1.append(pathDelay1[rec_id1.index(i)])
-                    if i not in rec_id1:
-                        hatLinkDelay1.append(2*0.02*(sPN+2))
-                    if i in rec_id2:
-                        hatLinkDelay2.append(pathDelay2[rec_id2.index(i)])
-                    if i not in rec_id2:
-                        hatLinkDelay2.append(2*0.02*(sPN+2))
-                # for id in rec_id1:
-                #     if id in rec_id2:
-                #         index1 = rec_id1.index(id)
-                #         index2 = rec_id2.index(id)
-                #         hatLinkDelay1.append(pathDelay1[index1])
-                #         hatLinkDelay2.append(pathDelay2[index2])
+                if len(pathDelay1) == 1000 and len(pathDelay2) == 1000:
+                    hatLinkDelay1 = pathDelay1
+                    hatLinkDelay2 = pathDelay2
+                else:
+                    for i in range(1000):
+                        if i in rec_id1:
+                            hatLinkDelay1.append(pathDelay1[rec_id1.index(i)])
+                        if i not in rec_id1:
+                            hatLinkDelay1.append(2*0.15485*(sPN+2))
+                        if i in rec_id2:
+                            hatLinkDelay2.append(pathDelay2[rec_id2.index(i)])
+                        if i not in rec_id2:
+                            hatLinkDelay2.append(2*0.15485*(sPN+2))
                 pathDelayCov = Covariance_way2(hatLinkDelay1, hatLinkDelay2)
                 pathDelay = [hatLinkDelay1,hatLinkDelay2]
                 open(filename1,"a+").write(str(pathDelayCov)+'\n')
@@ -170,16 +168,17 @@ def calDelayCov(dir="/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/end_to_
                 for i in range(sPN):
                     if i == 0:
                         LinkDelay.append(getLinkDelay("10.1.1.1", ["10.1." + str(2 + sPN) + ".2", "10.1." + str(4 + sPN) + ".2"], filename, 0, 3)["linkDelay"])
-                        LinkDelay[-1].extend([2*0.02*(sPN+2) for i in range(2000-len(LinkDelay[-1]))])
+                        LinkDelay[-1].extend([2*0.15485 for i in range(2000-len(LinkDelay[-1]))])
                     else:
                         LinkDelay.append(getLinkDelay("10.1.1.1", ["10.1." + str(2 + sPN) + ".2", "10.1." + str(4 + sPN) + ".2"], filename, i+2, i+3)["linkDelay"])
-                        LinkDelay[-1].extend([2 * 0.02 * (sPN + 2) for i in range(2000 - len(LinkDelay[-1]))])
+                        LinkDelay[-1].extend([2 * 0.15485 for i in range(2000 - len(LinkDelay[-1]))])
                 linkDelayCov = []
                 for linkdelay in LinkDelay:
                     linkDelayCov.append(Covariance_way2(linkdelay,linkdelay))
                 filename4 = data_dir + "/linkDelay" + str(sPN) + "_" + str(cnt)
                 open(filename4,"w").write(str(LinkDelay)+"\n")
                 open(filename2,"a+").write(str(linkDelayCov)+"\n")
+                print(pathDelayCov,sum(linkDelayCov))
 
 
 def calInterarrival(dir="/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/end_to_end/sandwich/",load="heavy_load"):
@@ -445,13 +444,6 @@ def get_b2b(data_dir, load):
         filename1 = data_dir+"/"+load+"/"+str(pathNum)+"/pathDelayCov"+str(pathNum)
         if os.path.exists(filename1):
             curve1.append(np.loadtxt(filename1).mean())
-        else: ## 待会删掉
-            cov = []
-            for c in range(100):
-                filename3 = data_dir+"/"+load+"/"+str(pathNum)+"/pathDelay"+str(pathNum)+"_"+str(c)
-                pathDelay = np.loadtxt(filename3)
-                cov.append(Covariance_way2(pathDelay[0],pathDelay[1]))
-            curve1.append(np.mean(cov))
         filename2 = data_dir+"/"+load+"/"+str(pathNum)+"/linkDelayCov"+str(pathNum)
         if os.path.exists(filename2):
             linkDelay = []
@@ -459,9 +451,6 @@ def get_b2b(data_dir, load):
             for line in lines:
                 linkDelay.append(np.sum(ast.literal_eval(line)))
             curve2.append(np.mean(linkDelay))
-        else:
-            curve2.append(4.3e-08)
-
     return curve1,curve2
 
 def plot_b2b(data_dir):
@@ -470,10 +459,10 @@ def plot_b2b(data_dir):
     :param data_dir:
     :return:
     '''
-    LOAD = ["light_load", "medium_load", "heavy_load"]
-    # LOAD = ["heavy_load"]
-    LABEL = ["9%|0", "40%|0", "75%|1%"]
-    # LABEL = ["75%|1%"]
+    # LOAD = ["light_load", "medium_load", "heavy_load"]
+    LOAD = ["medium_load"]
+    # LABEL = ["9%|0", "40%|0", "75%|1%"]
+    LABEL = ["40%|0"]
     PATHNUM = [1, 2, 3, 4, 5, 6, 7, 8]
     # PATHNUM = [1]
     for load in LOAD:
@@ -645,6 +634,56 @@ def get_b2b_2(data_dir, load):
 
     return curve1,curve2
 
+def plot_b2bwithdot(data_dir):
+    '''
+    b2b 画图 加上点
+    :return:
+    '''
+    LOAD = ["light_load","medium_load","heavy_load"]
+    LABEL = ["9%|0","40%|0","75%|1%"]
+    PATHNUM = [1,2,3,4,5,6,7,8]
+    for load in LOAD:
+        curve1,curve2 = get_b2b(data_dir,load)
+        curve3,curve4 = get_b2bwithdot(data_dir,load)
+        fig1 = plt.subplot()
+        plt.xlabel('sharedLinkNum')
+        plt.ylabel('sharedPathDistance')
+        label = LABEL[LOAD.index(load)]
+        plt.plot(PATHNUM, curve1, 'o-', label=label+ "cov(a,b)",c="blue")
+        plt.plot(PATHNUM, curve1, 'x-', label=label + "sum_{X(a)}", c="black")
+        ##pathdelay
+        for pathnum in PATHNUM:
+            for delay in curve3[PATHNUM.index(pathnum)]:
+                plt.scatter(pathnum,delay,marker=".",c="red")
+        ##linkdelay
+        # for pathnum in PATHNUM:
+        #     for delay in curve4[PATHNUM.index(pathnum)]:
+        #         plt.scatter(pathnum, delay, marker="o", c="yellow")
+        plt.grid(True)
+        plt.legend(bbox_to_anchor=(1.0, 1), loc=1, borderaxespad=0.)
+        plt.title('b2b Probing(delay cov)', loc='center')
+        plt.show()
+def get_b2bwithdot(data_dir,load):
+    '''
+    与plot_b2bwithdot配套的函数，获取100个点
+    :param data_dir:
+    :param load:
+    :return:
+    '''
+    curve1 = [] ##pathdelaycov
+    curve2 = [] ##linkdelayvar
+    PATHNUM = [1, 2, 3, 4, 5, 6, 7, 8]
+    for pathNum in PATHNUM:
+        filename1 = data_dir + "/" + load + "/" + str(pathNum) + "/" + "pathDelayCov" + str(pathNum)
+        Delay1 = np.loadtxt(filename1)
+        curve1.append(list(Delay1))
+        Delay2 = []
+        filename2 = data_dir + "/" + load + "/" + str(pathNum) + "/" + "linkDelayCov" + str(pathNum)
+        lines = open(filename2,"r").readlines()
+        for line in lines:
+            Delay2.append(sum(ast.literal_eval(line)))
+        curve2.append(Delay2)
+    return curve1,curve2
 
 if __name__ == "__main__":
     # srcIP = "10.1.1.1"
@@ -654,16 +693,16 @@ if __name__ == "__main__":
     # data = getPathDelay(srcIP,destIp,filename,destnode)
     # print(data)
     # calInterarrival(load="heavy_load")
-    calDelayCov()
+    # calDelayCov()
     # pass
     # getLossInfo("/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/end_to_end/loss_rate/heavy_load-1","heavy_load-1")
     # getLossInfo("/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/end_to_end/loss_rate/heavy_load-2", "heavy_load-2")
     # getLossInfo("/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/end_to_end/loss_rate/heavy_load-3", "heavy_load-3")
     # plot_sandwich("/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/end_to_end/sandwich")
     # calLossRate("/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/end_to_end/loss_rate/heavy_load-2","heavy_load-2")
-    # plot_b2b("/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/end_to_end/back-to-back")
+    plot_b2bwithdot("/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/end_to_end/back-to-back")
     # calInterarrival(load="no_traffic")
     # plot_sandwich("/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/end_to_end/sandwich")
-    # plot_loss()
+    plot_loss()
     # plot_sandwichwithdot("/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/end_to_end/sandwich")
     # plot_loss("/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/end_to_end/loss_rate")

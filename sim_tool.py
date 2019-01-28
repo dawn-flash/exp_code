@@ -22,6 +22,7 @@ import networkx as nx
 import json
 from scipy.stats import t as T_d
 from scipy.stats import norm
+import scipy.stats
 parameter = {
     'K':200,
     'Norm':20,
@@ -827,7 +828,8 @@ def plotResult(plot_data=[],FILENAME={},file=False, plot_alg="ALL"):
     ALG = []
     if plot_alg == "ALL":
         ALG = ["ALT", "RNJ", "T-test", "HTE"]
-        # ALG = ["ALT","RNJ","T-test"]
+        # ALG = ["ALT","RNJ"]
+        # ALG = ["HTE"]
         ALG_line = ["x-",".-","o-","v-"]
     if plot_alg != "ALL":
         for alg in plot_alg.split("|"):
@@ -1135,7 +1137,8 @@ def evaluation(data_dir,flag = False):
     FILENAME = {
     }
     ALG = ["ALT", "RNJ", "T-test", "HTE"]
-    # ALG = ["ALT", "RNJ", "T-test"]
+    # ALG = ["ALT", "RNJ"]
+    # ALG = ["HTE"]
     for alg in ALG:
         FILENAME[alg]={}
         filename1 = data_dir+"/"+alg+"/inferredE_"+alg
@@ -1181,9 +1184,10 @@ def doSim(data_dir,getMetric,flag=False):
     :return:
     '''
     if(flag):##推断
-        ALG = ["ALT", "RNJ", "T-test","HTE"]
-        # ALG = ["ALT", "RNJ"]
+        # ALG = ["ALT", "RNJ", "T-test","HTE"]
+        ALG = [ "RNJ","ALT"]
         # ALG = ["HTE"]
+        # ALG = ["T-test","HTE"]
         for alg in ALG:
             filename = data_dir+"/"+alg+"/"+"inferredE_"+alg  ##清理一下
             if os.path.exists(filename):
@@ -1203,8 +1207,9 @@ def doSim(data_dir,getMetric,flag=False):
                     if alg == "RNJ":
                         ##处理文件
                         R = getLeafNodes(VTree)
-                        S = getMetric(filename,len(R),200,200)
-                        e = 0.00038
+                        S = getMetric(filename,len(R),2000,2000)
+                        # e = 0.0003813334
+                        e = 1.92e-08
                         inferredE = RNJ(R,S,e)
                         filename1 = data_dir+"/"+alg+"/inferredE_"+alg
                         open(filename1,"a+").write(str(inferredE)+"\n")
@@ -1213,18 +1218,21 @@ def doSim(data_dir,getMetric,flag=False):
                         R = getLeafNodes(VTree)
                         S = getMetric(filename,len(R))
                         if alg == "ALT":
-                            e = 0.00038
+                            # e = 0.0003813334
+                            e = 1.92e-08
                             inferredBE,dotS = ALT(S,R)
                             inferredE = prune(inferredBE,dotS,R,e)
                             filename2 = data_dir + "/" +alg+ "/inferredE_" + alg
                             open(filename2, "a+").write(str(inferredE) + "\n")
                             print("ALT:", inferredE)
                         elif alg == "HTE":
+                            transform(S)
                             inferredE = HTE(S,R)
                             filename3 = data_dir + "/" +alg+ "/inferredE_" + alg
                             open(filename3, "a+").write(str(inferredE) + "\n")
                             print("HTE:", inferredE)
                         elif alg == "T-test":
+                            transform(S)
                             inferredBE = ALT(S,R)[0]
                             inferredE = TP(inferredBE,R,S)
                             filename3 = data_dir + "/" + alg+"/inferredE_" + alg
@@ -1238,7 +1246,10 @@ def doSim(data_dir,getMetric,flag=False):
             serial_number = serial_number+1
     FILENAME = evaluation(data_dir,flag)
     plotResult(FILENAME=FILENAME,file=True)
-
+def transform(S):
+    for key in S:
+        for i in range(len(S[key])):
+            S[key][i] = S[key][i]*1000000
 def genSourceEs(data_dir):
     '''
     生成sourceE文件
@@ -1347,55 +1358,62 @@ def getSourceEs(filename):
         else:
             break
     return sourceE
-def test(data_dir):
-    VTrees = getVTrees(data_dir+"/VTrees_5_5_13")
-    serial_number = 0
-    PATHNUM = [i + 5 for i in range(9)]
-    for VTree in VTrees:
-        pathNum = PATHNUM[int(serial_number / 100)]
-        filename = data_dir+"/"+str(pathNum)+"/"+"Metric"+str(serial_number)
-        if os.path.exists(filename):
-            R = getLeafNodes(VTree)
-            S = getMetric(filename,len(R))
-            inferredE = HTE(S,R)
-            serial_number = serial_number+1
-def test2(filename="/media/zongwangz/RealPAN-13438811621/myUbuntu/ns3_workspace/NS3/test_4.tr"):
-    record = []
-    lines = open(filename,"r").readlines()
-    for line in lines:
-        oc = re.split(r"\)|\(| ", line)
-        action = oc[0]
-        time = float(oc[1])
-        namespace = oc[2]
-        currentNode = int(namespace.split("/")[2])
-        packet_id = int(oc[23])
-        src_ip = oc[35]
-        dest_ip = oc[37]
-        src_port = oc[43]
-        dest_port = oc[45]
-        # size = int(oc[49].split("=")[1])
-        if currentNode == 2 and action == "r" and src_ip == "10.0.1.1" and dest_ip == "10.1.2.2":
-            print("packet id:",packet_id,"receive time:",time)
-            if packet_id%2 != 0 and record:
-                print("时间:",time-record[0]-0.02)
-                del record[0]
-            else:
-                record.append(time)
-
-    print("done")
+# def test(data_dir):
+#     VTrees = getVTrees(data_dir+"/VTrees_5_5_13")
+#     serial_number = 0
+#     PATHNUM = [i + 5 for i in range(9)]
+#     for VTree in VTrees:
+#         pathNum = PATHNUM[int(serial_number / 100)]
+#         filename = data_dir+"/"+str(pathNum)+"/"+"Metric"+str(serial_number)
+#         if os.path.exists(filename):
+#             R = getLeafNodes(VTree)
+#             S = getMetric(filename,len(R))
+#             inferredE = HTE(S,R)
+#             serial_number = serial_number+1
+# def test2(filename="/media/zongwangz/RealPAN-13438811621/myUbuntu/ns3_workspace/NS3/test_4.tr"):
+#     record = []
+#     lines = open(filename,"r").readlines()
+#     for line in lines:
+#         oc = re.split(r"\)|\(| ", line)
+#         action = oc[0]
+#         time = float(oc[1])
+#         namespace = oc[2]
+#         currentNode = int(namespace.split("/")[2])
+#         packet_id = int(oc[23])
+#         src_ip = oc[35]
+#         dest_ip = oc[37]
+#         src_port = oc[43]
+#         dest_port = oc[45]
+#         # size = int(oc[49].split("=")[1])
+#         if currentNode == 2 and action == "r" and src_ip == "10.0.1.1" and dest_ip == "10.1.2.2":
+#             print("packet id:",packet_id,"receive time:",time)
+#             if packet_id%2 != 0 and record:
+#                 print("时间:",time-record[0]-0.02)
+#                 del record[0]
+#             else:
+#                 record.append(time)
+#
+#     print("done")
 
 if __name__ == "__main__":
     # calMetrics()
     # doSim("/media/zongwangz/RealPAN-13438811621/myUbuntu/data/alg",getMetric,False)
     # test("/media/zongwangz/RealPAN-13438811621/myUbuntu/data/alg")
-    S = calmetric("/media/zongwangz/RealPAN-13438811621/myUbuntu/ns3_workspace/NS3/sourceTrace0.tr",[4, 5, 5, 0, 4],200)
-    saveS(S,"temp")
+    # S = calmetric("/media/zongwangz/RealPAN-13438811621/myUbuntu/ns3_workspace/NS3/sourceTrace0.tr",[4, 5, 5, 0, 4],200)
+    # saveS(S,"temp")
     # saveS(S,"/media/zongwangz/RealPAN-13438811621/myUbuntu/ns3_workspace/NS3/Metric566_1.tr")
-    # S = {"S1,2":[0.80519455, 0.8966798, 0.96934542, 1.31974894, 1.21968812, 0.97269079,
-    #       0.98756366, 1.14703086, 1.08052672, 0.66166157], "S1,3":[1.23582156, 0.71514264
-    #          , 0.9472801, 0.92439054, 0.83858516, 0.8427213, 0.9697713, 1.0119358
-    #          , 0.67386525, 0.88768506], "S2,3":[1.57622986, 2.27730784, 2.23312594, 2.4018319, 1.67054506, 2.00702968,
-    #                                      1.78302326, 2.26257297, 2.05161827, 1.78079614]}
-    # HTE(S,[1,2,3])
+    # S = {"S1,2":stats.gennorm.rvs(0.36267604204732506,0.002922659999999873,1.0521293968907097e-06,10),
+    #      "S1,3":stats.gennorm.rvs(0.36267604204732506,0.002922659999999873,1.0521293968907097e-06,10),
+    #     "S2,3":stats.gennorm.rvs(0.11041748842287355,0.005802670659316566,3.508930776095499e-14,10)}
+    # S = {"S1,2": stats.norm.rvs(0.002922659999999873, 1.0521293968907097e-06, 10),
+    #      "S1,3": stats.norm.rvs(0.002922659999999873, 1.0521293968907097e-06, 10),
+    #      "S2,3": stats.norm.rvs(0.005802670659316566, 3.508930776095499e-14, 10)}
+    # print(HTE(S,[1,2,3]))
     # pass
     # test2()
+    # S = getMetric("/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/alg/light_load/9/Metric661",9)
+    # transform(S)
+    # R = [1,2,3,4,5,6,7,8,9]
+    # inferredBE = ALT(S,R)[0]
+    # inferredE = TP(inferredBE,R,S)
+    pass

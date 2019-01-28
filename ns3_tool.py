@@ -1360,8 +1360,10 @@ def print_trace(filename,pid,srcIP,destIP):
             dest_ip = oc[37]
             src_port = oc[43]
             dest_port = oc[45]
+            currentNode = int(namespace.split("/")[2])
             if src_ip == srcIP and dest_ip == destIP and packet_id == pid:
-                print(line)
+            # if time >= 3.04015131 and time <= 3.08499323 and currentNode == 4 and src_ip != '10.1.5.1' and src_ip != '10.1.2.1' and src:
+                print(action,time,namespace,packet_id,src_ip,dest_ip)
 
 
 
@@ -1384,27 +1386,34 @@ def data_test(data_dir="/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/end_
 def drawNormHist(X,xlabel="",ylabel="",title=""):
     #创建直方图
     X = np.array(X)
-    fig1 = plt.subplot()
-    plt.hist(X,bins='auto')
-    plt.xlabel(xlabel)
-    plt.ylabel(ylabel)
-    plt.title(title)
-    plt.show()
-    plt.close()
+    fig = plt.subplot()
+    # weights = np.ones_like(X) / (len(X))
+    # n, bins, patches = plt.hist(X, bins=100, weights=weights)
+    # n, bins, patches = plt.hist(X, bins=100)
+    n, bins, patches = plt.hist(X,bins='auto',density=True)
 
-    # mu,sigma = norm.fit(X)
-    # print("均值: ",mu,"标准差: ",sigma)
-    #
-    # beta,loc,scale = stats.gennorm.fit(X)
-    # print("shape: ",beta, "location: ", loc,"scale: ", scale)
-    # print("norm: ",kstest(X,'norm',(mu,sigma)))
-    # print("gennorm: ",kstest(X,"gennorm",(beta,loc,scale)))
+
+    mu, sigma = norm.fit(X)
+    print("均值: ",mu,"标准差: ",sigma)
+    y1 = norm.pdf(bins,mu,sigma)
+    # print("y1:",y1)
+    plt.plot(bins,y1,label='norm',c="red")
+    print("kstest for norm:", kstest(X, "norm", (mu, sigma)))
+
+    beta,loc,scale = stats.gennorm.fit(X)
+    print("shape: ",beta, "location: ", loc,"scale: ", scale)
+    y2 = stats.gennorm.pdf(bins,beta,loc,scale)
+    # print("y2:", y2)
+    plt.plot(bins,y2,label="gennorm",c='black')
+    print("kstest for gennorm:",kstest(X,"gennorm",(beta,loc,scale)))
+    plt.legend()
+    plt.show()
 
 def getNormData(probe_way="sandwich",load="light_load"):
     x = []
-    data_dir = "/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/end_to_end/"+probe_way+"/"+load+"/"+str(8)
+    data_dir = "/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/end_to_end/"+probe_way+"/"+load+"/"+str(4)
     for i in range(100):
-        filename = data_dir+"/Interarrival"+str(8)+"_"+str(i)
+        filename = data_dir+"/Interarrival"+str(4)+"_"+str(i)
         if i == 0:
 
             x = list(np.loadtxt(filename))
@@ -1414,6 +1423,14 @@ def getNormData(probe_way="sandwich",load="light_load"):
     x = np.array(x)
     return x
 
+def for_test():
+    num = 20000
+    shape = 0.11041748842287355
+    loc = 0.025802670659316566
+    scale = 3.508930776095499e-14
+    for i in range(10):
+        X = stats.gennorm.rvs(shape,loc,scale,size =num)
+        print(kstest(X,"gennorm",(shape,loc,scale)))
 
 if __name__ == "__main__":
     # test_2("/media/zongwangz/RealPAN-13438811621/myUbuntu/ns3_workspace/NS3/test_3.tr")
@@ -1425,6 +1442,14 @@ if __name__ == "__main__":
     # plot_sandwich_part()
     # plotSandwichWithDot()
     # plot_loss()
-    # print_trace("/media/zongwangz/RealPAN-13438811621/myUbuntu/ns3_workspace/NS3/heavy_load2_0.tr",np.random.randint(0,1000),"10.1.1.1","10.1.4.2")
-    x = getNormData(load="light_load")
-    drawNormHist(x)
+    print_trace("/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/end_to_end/back-to-back/medium_load/4/medium_load4_0.tr",100,"10.1.1.1","10.1.6.2")
+    # print_trace(
+    #     "/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/end_to_end/back-to-back/heavy_load/2/heavy_load2_0.tr", 0,
+    #     "10.1.1.1", "10.1.6.2")
+    # LOAD = ['light_load','medium_load','heavy_load']
+    # for load in LOAD:
+    #     print(load)
+    #     x = getNormData(load = load)
+    #     drawNormHist(x)
+    # for_test()
+    # pass
