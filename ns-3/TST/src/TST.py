@@ -11,6 +11,7 @@ import pandas as pd
 import json
 import os
 import sys
+from keras.models import load_model
 parameter = {
     'outDegree':5,
     'pathNum':8,
@@ -28,7 +29,7 @@ class TST:
         self.num_probe = 200
 
     @staticmethod
-    def genFourTypeData(train_data="train_data", test_data="test_data", scale=1.0,probesNum=200):
+    def genFourTypeData(train_data="/home/zongwangz/exp_code/ns-3/TST/data/train_data", test_data="/home/zongwangz/exp_code/ns-3/TST/data/test_data", scale=1.0,probesNum=200):
         # 一、生成数据
         # 1.生成1000组T=0的训练数据和500组的测试数据
         train_dataNum = 1
@@ -143,7 +144,7 @@ class TST:
             open(filename, "a+").write(str(T) + '\n')
 
     @staticmethod
-    def fourTypesTest(train_data="train_data", test_data="test_data"):
+    def fourTypesTest(train_data="/home/zongwangz/exp_code/ns-3/TST/data/train_data", test_data="/home/zongwangz/exp_code/ns-3/TST/data/test_data"):
         # 一、生成数据
         # 二、训练模型
         # 1.格式化数据，包括打乱数据
@@ -236,7 +237,7 @@ class TST:
             return x, y
 
     @staticmethod
-    def genUnTrainedtModel():
+    def  genUnTrainedtModel():
         model = Sequential()
         model.add(Convolution2D(
             nb_filter=32,  ###第一层卷积层中滤波器的个数#
@@ -246,7 +247,7 @@ class TST:
             # input_shape=(1, 3, num_probe)
             input_shape=(1, 3, 200)
         ))
-
+        print(model.get_output_shape_at(0))
         model.add(Activation('relu'))  # 激活函数为relu
 
         model.add(MaxPooling2D(
@@ -254,19 +255,24 @@ class TST:
             strides=(2, 2),
             padding='same',  # padding mode is 'same'
         ))
+        print(model.get_output_shape_at(0))
 
         model.add(Convolution2D(64, (3, 3), padding='same'))
+        print(model.get_output_shape_at(0))
+
         model.add(Activation('relu'))
         model.add(MaxPooling2D(strides=(2, 2), padding='same'))
-
+        print(model.get_output_shape_at(0))
         model.add(Flatten())  # 将多维的输入一维化
         model.add(Dense(1024))  # 全连接层 1024个点
+        print(model.get_output_shape_at(0))
         model.add(Activation('relu'))
 
         model.add(Dense(4))
         model.add(Activation('softmax'))  # softmax 用于分类
-
+        print(model.get_output_shape_at(0))
         adam = Adam()  # 学习速率lr=0.0001
+
 
         model.compile(optimizer=adam,
                       loss='categorical_crossentropy',
@@ -1251,6 +1257,52 @@ class TST:
         plt.legend(bbox_to_anchor=(1.0, 1), loc=1, borderaxespad=0.)
         plt.show()
 
+    @staticmethod
+    def test_TST():
+        '''
+        假设M全部为正确的T值，检验TST算法的正确性
+        author:zzw
+        edit time:2019.02.19
+        采用的是Topo_4_3_10文件中的topo
+        :return:
+        '''
+        PC = []     ## 精度
+        ED = []     ## 编辑距离
+        PN = [_ for _ in range(3, 11)]
+        VTrees = getVTrees("/home/zongwangz/exp_code/Topo_4_3_10")
+        serial_number = 0
+        for VTree in VTrees:
+            R = getLeafNodes(VTree)
+            M = []
+            E = VTreetoE(VTree)
+            for iNode in R:
+                for jNode in R:
+                    if jNode > iNode:
+                        for dNode in R:
+                            if dNode > jNode:
+                                T = TST.getValueTFromE(E,iNode,jNode,dNode)
+                                M.append((iNode,jNode,dNode,T))
+            inferredE = TST.TST(R,M)
+        ##画编辑距离
+        fig1= plt.subplot()
+        plt.xlabel('pathNum')
+        plt.ylabel('edit distance')
+        plt.plot(PN, ED, 'o-', label='TST')
+        plt.grid(True)
+        plt.legend(bbox_to_anchor=(1.0, 1), loc=1, borderaxespad=0.)
+        plt.show()
+
+        ##画精度
+        fig2 = plt.subplot()
+        plt.xlabel('pathNum')
+        plt.ylabel('PC')
+        plt.plot(PN, PC, 'o-', label='PC')
+        plt.grid(True)
+        plt.legend(bbox_to_anchor=(1.0, 1), loc=1, borderaxespad=0.)
+        plt.show()
 if __name__ == "__main__":
     # TST.doSim()
-    TST.smallTest()
+    # TST.genFourTypeData()
+    TST.fourTypesTest()
+    # TST.doSimulation()
+    # TST.test_TST()

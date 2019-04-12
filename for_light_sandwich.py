@@ -31,13 +31,13 @@ def getVTrees(filename="/home/zzw/data/light_load/Topo_4_3_10"):
             VTrees.append(VTree)
     return VTrees
 
-def calMetrics(pktnum=200):
+def calMetrics(dir,pktnum=200):
     '''
     计算度均值
     :param pktnum:
     :return:
     '''
-    VTrees = getVTrees()
+    VTrees = getVTrees(dir+"/Topo_4_3_10")
     n = len(VTrees)
     while len(VTrees) != 0:
         ##还有文件没处理完
@@ -45,10 +45,10 @@ def calMetrics(pktnum=200):
         f1 = " "
         f2 = " "
         for i in range(n):
-            filename1 = "/home/zzw/data/light_load/sourceTrace" + str(
+            filename1 = dir+"/sourceTrace" + str(
                 i) + ".tr"
-            filename2 = "/home/zzw/data/light_load/Metric" + str(i)
-            filename3 = "/home/zzw/data/light_load/sourceTrace" + str(
+            filename2 = dir+"/Metric" + str(i)
+            filename3 = dir+"/sourceTrace" + str(
                 i+1) + ".tr"
             flag1 = os.path.exists(filename1)
             flag2 = os.path.exists(filename2)
@@ -78,7 +78,7 @@ def calMetrics(pktnum=200):
         if flag:
             S = calmetric(f1,VTrees[i])
             saveS(S,f2)
-            os.remove(f1)
+            # os.remove(f1)
 def saveS(S,filename):
     if os.path.exists(filename):
         os.remove(filename)
@@ -236,8 +236,6 @@ def calmetric(filename,VTree,pktnum=200):
                     if len(toRemove) == 2:
                         record[toRemove[0]]["packet_order"].remove(toRemove[1])
                         cnt = cnt + 1
-                        if toRemove[0] == "4,8":
-                            print(toRemove[0],toRemove[1],[toRemove[1][2]-toRemove[1][0]-0.02],cnt)
                         if cnt == sum:
                             print("all receive")
                             break
@@ -251,4 +249,5 @@ def calmetric(filename,VTree,pktnum=200):
     return S
 
 if __name__ == "__main__":
-    calMetrics()
+    dir="/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/alg/sandwich_vary_all"
+    calMetrics(dir)

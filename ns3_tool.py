@@ -693,6 +693,8 @@ def calPathlossRate(srcIP="10.1.1.1",destIP="10.1.3.2",sourceNode=0,destNode=1,f
 def calLinklossRate(srcIP="10.1.1.1",destIP="10.1.12.2",sourceNode=0,destNode=3,filename=" ",action1="r",action2="r"):
     '''
     计算链路的丢包率
+
+    有问题的函数
     :return:
     '''
     p = [_ for _ in range(1000)]
@@ -728,10 +730,6 @@ def calLinklossRate(srcIP="10.1.1.1",destIP="10.1.12.2",sourceNode=0,destNode=3,
     # print("receive_packets2:",receive_packets2)
     # print(last_time)
     print(p)
-    if sourceNode == 0:
-        # print(receive_packets2/(highest_id+1))
-        return 1-receive_packets2/(highest_id+1)
-    # print((receive_packets2-receive_packets1) / receive_packets1)
     return (receive_packets1-receive_packets2) / receive_packets1
 
 def plot_xy():
@@ -1433,6 +1431,7 @@ def for_test():
         print(kstest(X,"gennorm",(shape,loc,scale)))
 
 if __name__ == "__main__":
+    # calLinklossRate("10.1.1.1","10.1.3.2",0,3,"/media/zongwangz/RealPAN-13438811621/myUbuntu/data4/end-to-end/back-to-back/heavy_load1_0.tr","")
     # test_2("/media/zongwangz/RealPAN-13438811621/myUbuntu/ns3_workspace/NS3/test_3.tr")
     # plotB2BCOV()
     # data = getPathDelay("10.1.1.1","10.1.3.2","/media/zongwangz/RealPAN-13438811621/myUbuntu/ns3_workspace/NS3/medium_load1_0.tr",1)
@@ -1442,7 +1441,7 @@ if __name__ == "__main__":
     # plot_sandwich_part()
     # plotSandwichWithDot()
     # plot_loss()
-    print_trace("/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/end_to_end/back-to-back/medium_load/4/medium_load4_0.tr",100,"10.1.1.1","10.1.6.2")
+    # print_trace("/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/end_to_end/back-to-back/medium_load/4/medium_load4_0.tr",100,"10.1.1.1","10.1.6.2")
     # print_trace(
     #     "/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/end_to_end/back-to-back/heavy_load/2/heavy_load2_0.tr", 0,
     #     "10.1.1.1", "10.1.6.2")
@@ -1452,4 +1451,4 @@ if __name__ == "__main__":
     #     x = getNormData(load = load)
     #     drawNormHist(x)
     # for_test()
-    # pass
+    pass

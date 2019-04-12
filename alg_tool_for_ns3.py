@@ -750,7 +750,7 @@ if __name__ == "__main__":
     # S = calmetric2("/media/zongwangz/RealPAN-13438811621/myUbuntu/ns3_workspace/NS3/sourceTrace0.tr","/media/zongwangz/RealPAN-13438811621/myUbuntu/ns3_workspace/NS3/order0",[4, 5, 5, 0, 4],2000)
     # calMetrics(calmetric2,saveS2,2000)
     # genSourceEs()
-    # doSim("/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/alg/medium_load",getMetric2,True)
+    doSim("/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/alg/sandwich_vary_traffic",getMetric,True)
     # pass
     # S = calmetric3("/media/zongwangz/RealPAN-13438811621/myUbuntu/ns3_workspace/NS3/sourceTrace0.tr","/media/zongwangz/RealPAN-13438811621/myUbuntu/ns3_workspace/NS3/order0",[4, 5, 5, 0, 4],2000)
     # saveS2(S,"/media/zongwangz/RealPAN-13438811621/myUbuntu/ns3_workspace/NS3/result")
@@ -758,4 +758,4 @@ if __name__ == "__main__":
     # print(S)
     # S = calmetric("/media/zongwangz/RealPAN-13438811621/myUbuntu/ns3_workspace/NS3/sourceTrace0.tr",[5,5,4,0,4])
     # print(S)
-    for_test()
+    # for_test()

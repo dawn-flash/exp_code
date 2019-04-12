@@ -118,12 +118,12 @@ def getLinkDelay(srcIP, destIPList, filename, headNode, tailNode):
     return data
 
 
-def calDelayCov(dir="/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/end_to_end/back-to-back/",load="medium_load"):
+def calDelayCov(dir="/media/zongwangz/RealPAN-13438811621/myUbuntu/data3/end_to_end/back-to-back2/",load="medium_load"):
     '''
     计算路径时延，链路时延，计算路径协方差，计算链路方差，分别保存文件
     :return:
     '''
-    sharePathNum = [1,2,3,4,5,6,7,8]
+    sharePathNum = [8]
     for sPN in sharePathNum:
         data_dir = dir + load + "/" + str(sPN)
         #若存在文件则删除
@@ -467,7 +467,7 @@ def plot_b2b(data_dir):
     # PATHNUM = [1]
     for load in LOAD:
         curve1,curve2 = get_b2b(data_dir, load)
-        fig = plt.subplots()
+        fig = plt.subplot()
         plt.xlabel('sharedLinkNum')
         plt.ylabel('sharedPathDistance')
         label = LABEL[LOAD.index(load)]
@@ -475,9 +475,14 @@ def plot_b2b(data_dir):
         plt.plot(PATHNUM,curve2,'x-',label="Sum Variance")
         plt.legend(bbox_to_anchor=(1.0, 1), loc=1, borderaxespad=0.)
         plt.title(label)
+
+        print(np.array(curve2) - np.array(curve1))
+        # plt.plot(PATHNUM, np.array(curve2) - np.array(curve1), 'o-', label="")
+
         plt.show()
         plt.close()
-        print(np.array(curve2)-np.array(curve1))
+
+
 
 
 def get_loss(data_dir,load):
@@ -503,7 +508,7 @@ def plot_loss(data_dir):
     Diff = []
     for load in LOAD:
         curve1,curve2 = get_loss(data_dir, load)
-        Diff.append(list(np.array(curve1)-np.array(curve2)))
+        Diff.append(list(( np.array(curve2)-np.array(curve1) )/ np.array(curve1)))
         fig1 = plt.subplot()
         plt.xlabel('sharedLinkNum')
         plt.ylabel('sharedPathDistance')
@@ -639,12 +644,18 @@ def plot_b2bwithdot(data_dir):
     b2b 画图 加上点
     :return:
     '''
-    LOAD = ["light_load","medium_load","heavy_load"]
-    LABEL = ["9%|0","40%|0","75%|1%"]
+    # LOAD = ["light_load","medium_load","heavy_load"]
+    LOAD = ["medium_load"]
+    # LABEL = ["9%|0","40%|0","75%|1%"]
+    LABEL = ["40%|0"]
     PATHNUM = [1,2,3,4,5,6,7,8]
     for load in LOAD:
         curve1,curve2 = get_b2b(data_dir,load)
         curve3,curve4 = get_b2bwithdot(data_dir,load)
+        curve1 = np.log(curve1)
+        curve2 = np.log(curve2)
+        curve3 = np.log(curve3)
+        curve4 = np.log(curve4)
         fig1 = plt.subplot()
         plt.xlabel('sharedLinkNum')
         plt.ylabel('sharedPathDistance')
@@ -685,6 +696,30 @@ def get_b2bwithdot(data_dir,load):
         curve2.append(Delay2)
     return curve1,curve2
 
+def plot_error_b2b(data_dir):
+    '''
+    画方差的误差比例
+    :return:
+    '''
+    LOAD = ["medium_load"]
+    LABEL = ["40%|0"]
+    PATHNUM = [1, 2, 3, 4, 5, 6, 7]
+    for load in LOAD:
+        curve1, curve2 = get_b2b(data_dir, load) ## cov sum
+        curve1 = np.array(curve1)
+        curve2 = np.array(curve2)
+        curve3 = curve2-curve1
+        curve3 = curve3/curve2
+        fig1 = plt.subplot()
+        plt.xlabel('sharedLinkNum')
+        plt.ylabel('error proportion')
+        label = LABEL[LOAD.index(load)]
+        plt.plot(PATHNUM, curve3, 'o-', label=label + "(cov-sum_var)/cov", c="blue")
+        plt.grid(True)
+        plt.legend(bbox_to_anchor=(1.0, 1), loc=1, borderaxespad=0.)
+        plt.title('b2b Probing(delay cov)', loc='center')
+        plt.show()
+
 if __name__ == "__main__":
     # srcIP = "10.1.1.1"
     # destIp = "10.1.3.2"
@@ -693,16 +728,18 @@ if __name__ == "__main__":
     # data = getPathDelay(srcIP,destIp,filename,destnode)
     # print(data)
     # calInterarrival(load="heavy_load")
-    # calDelayCov()
+    # calDelayCov("/media/zongwangz/RealPAN-13438811621/myUbuntu/data3/end_to_end/back-to-back16/")
     # pass
-    # getLossInfo("/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/end_to_end/loss_rate/heavy_load-1","heavy_load-1")
+    getLossInfo("/media/zongwangz/RealPAN-13438811621/myUbuntu/data4/end-to-end/back-to-back/heavy_load","heavy_load")
     # getLossInfo("/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/end_to_end/loss_rate/heavy_load-2", "heavy_load-2")
     # getLossInfo("/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/end_to_end/loss_rate/heavy_load-3", "heavy_load-3")
     # plot_sandwich("/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/end_to_end/sandwich")
     # calLossRate("/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/end_to_end/loss_rate/heavy_load-2","heavy_load-2")
-    plot_b2bwithdot("/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/end_to_end/back-to-back")
+    # plot_b2bwithdot("/media/zongwangz/RealPAN-13438811621/myUbuntu/data3/end_to_end/back-to-back2")
     # calInterarrival(load="no_traffic")
     # plot_sandwich("/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/end_to_end/sandwich")
-    plot_loss()
+    # plot_loss()
     # plot_sandwichwithdot("/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/end_to_end/sandwich")
     # plot_loss("/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/end_to_end/loss_rate")
+    # plot_b2b("/media/zongwangz/RealPAN-13438811621/myUbuntu/data4/end_to_end/back-to-back")
+    # plot_error_b2b("/media/zongwangz/RealPAN-13438811621/myUbuntu/data4/end_to_end/back-to-back")

@@ -149,11 +149,16 @@ def RNJ(R,S,e):
     E = []
     n = len(dotR)
     number = n + 1
+    for i in range(n):
+        for j in range(n):
+            if i == j:
+                S[i][j] = -np.inf
     while len(dotR) != 1:
         for node in R:
             if node in R and node not in dotR:
                 for i in range(len(S[0])):
-                    S[R.index(node)][i] = S[i][R.index(node)] = 0
+                    # S[R.index(node)][i] = S[i][R.index(node)] = 0
+                    S[R.index(node)][i] = S[i][R.index(node)] = -np.inf
         indexs = np.where(np.max(S) == S)[0]
         iIndex = indexs[0]
         jIndex = indexs[1]
@@ -174,7 +179,8 @@ def RNJ(R,S,e):
         for node in brother:
             dotR.remove(node)
         n = len(R)
-        tempS = np.zeros((n, n))
+        # tempS = np.zeros((n, n))
+        tempS = [[-np.inf for _ in range(n)] for _ in range(n)]
         for i in range(n - 1):
             for j in range(n - 1):
                 tempS[i][j] = S[i][j]
@@ -668,7 +674,8 @@ ALT
 
 
 def ALT(starS, R):
-    S = [[0 for _ in range(len(R))] for _ in range(len(R))]
+    # S = [[0 for _ in range(len(R))] for _ in range(len(R))]
+    S = [[-np.inf for _ in range(len(R))] for _ in range(len(R))]
     for iNode in R:
         for jNode in R:
             if jNode > iNode:
@@ -680,7 +687,8 @@ def ALT(starS, R):
     number = len(R) + 1  ##编号
     V = copy.copy(R)  ##所有的节点
     hatV = copy.copy(R)  ##
-    hatS = np.zeros((len(R), len(R)))
+    # hatS = np.zeros((len(R), len(R)))
+    hatS = [[-np.inf for _ in range(len(R))] for _ in range(len(R))]
     for iNode in range(len(R)):
         for jNode in range(len(R)):
             if iNode != jNode:
@@ -700,7 +708,8 @@ def ALT(starS, R):
                 if inode in hatV and jnode in hatV:
                     continue
                 else:
-                    hatS[V.index(inode)][V.index(jnode)] = hatS[V.index(jnode)][V.index(inode)] = 0
+                    # hatS[V.index(inode)][V.index(jnode)] = hatS[V.index(jnode)][V.index(inode)] = 0
+                    hatS[V.index(inode)][V.index(jnode)] = hatS[V.index(jnode)][V.index(inode)] = -np.inf
         indexs = np.where(np.max(hatS) == hatS)[0]
         iIndex = indexs[0]
         jIndex = indexs[1]
@@ -714,7 +723,8 @@ def ALT(starS, R):
         for iNode in range(len(hatS[0])):
             for jNode in range(len(hatS[0])):
                 tempS[iNode][jNode] = hatS[iNode][jNode]
-        hatS = np.zeros((len(hatS[0]) + 1, len(hatS[0]) + 1))
+        # hatS = np.zeros((len(hatS[0]) + 1, len(hatS[0]) + 1))
+        hatS = [[-np.inf for _ in range(len(hatS[0]) + 1)] for _ in range(len(hatS[0]) + 1)]
         for iNode in range(len(tempS[0])):
             for jNode in range(len(tempS[0])):
                 hatS[iNode][jNode] = tempS[iNode][jNode]
@@ -1184,8 +1194,8 @@ def doSim(data_dir,getMetric,flag=False):
     :return:
     '''
     if(flag):##推断
-        # ALG = ["ALT", "RNJ", "T-test","HTE"]
-        ALG = [ "RNJ","ALT"]
+        ALG = ["ALT", "RNJ", "T-test","HTE"]
+        # ALG = [ "RNJ","ALT"]
         # ALG = ["HTE"]
         # ALG = ["T-test","HTE"]
         for alg in ALG:
@@ -1207,9 +1217,9 @@ def doSim(data_dir,getMetric,flag=False):
                     if alg == "RNJ":
                         ##处理文件
                         R = getLeafNodes(VTree)
-                        S = getMetric(filename,len(R),2000,2000)
-                        # e = 0.0003813334
-                        e = 1.92e-08
+                        S = getMetric(filename,len(R),200,200)
+                        e = 0.0003813334
+                        # e = 1.92e-08
                         inferredE = RNJ(R,S,e)
                         filename1 = data_dir+"/"+alg+"/inferredE_"+alg
                         open(filename1,"a+").write(str(inferredE)+"\n")
@@ -1218,8 +1228,8 @@ def doSim(data_dir,getMetric,flag=False):
                         R = getLeafNodes(VTree)
                         S = getMetric(filename,len(R))
                         if alg == "ALT":
-                            # e = 0.0003813334
-                            e = 1.92e-08
+                            e = 0.0003813334
+                            # e = 1.92e-08
                             inferredBE,dotS = ALT(S,R)
                             inferredE = prune(inferredBE,dotS,R,e)
                             filename2 = data_dir + "/" +alg+ "/inferredE_" + alg

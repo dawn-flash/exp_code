@@ -6,11 +6,31 @@ from matplotlib import pyplot as plt
 import scipy.stats as stats
 import os
 import ast  ## string list to list
+import copy
+import re
 def getChildren(E, parent):
+    '''
+    如果E不严格，那个输出的children顺序（左右）也不严格，用sort也没用
+    :param E:
+    :param parent:
+    :return:
+    '''
     children = []
     for edge in E:
         if edge[0] == parent:
             children.append(edge[1])
+    return children
+def getChilrenByVTree(VTree,parent):
+    '''
+    20190308
+    :param VTree:
+    :param parent:
+    :return:
+    '''
+    children = []
+    for i in range(len(VTree)):
+        if parent == VTree[i]:
+            children.append(i+1)
     return children
 
 def getParent(E, child):
@@ -343,7 +363,7 @@ def numberTopoByVTree(VTree,root = 0):
     :param root:
     :return: edge set
     '''
-    # leafNodes = getLeafNodes(VTree) ##需要调整顺序
+    # leafNodes = getLeafNodes(VTree) ##需要调整顺序,按照左右顺序调整
     leafNodes = []
     E = VTreetoE(VTree)
     visit = []
@@ -404,7 +424,13 @@ def EtoVTree(E):
         i = i+1
     return VTree
 
-
+def getSharedPathLenbyNode(E,u):
+    len = 0
+    parent = getParent(E,u)
+    while parent != -1:
+        len += 1
+        parent = getParent(E,parent)
+    return len
 def getSharedPathLenbyNodes(E, iNode, jNode):
     ancestor = getAncestor(E, iNode, jNode)
     parent = getParent(E, ancestor)
@@ -943,6 +969,44 @@ def getVTrees(filename="/home/zongwangz/PycharmProjects/Topo_4_3_10"):
                 VTree[VTree.index(item)] = int(item)
             VTrees.append(VTree)
     return VTrees
+def VTree2ToVTree1(VTree2,root=0):
+    '''
+    第二版VTree改为第一版，转换可能导致拓扑结构不一样
+    :param VTree2:  [6,6,7,7,0,5,5]
+    :return: [0,1,1,2,2,3,3]
+    '''
+    number = 0
+    changeTable = {} ##对换表
+    newE = [] ##不严谨的E set
+    visit=[root]
+    while visit:
+        node = visit[0]
+        del visit[0]
+        if node not in changeTable:
+            changeTable[node] = number
+            number +=1
+        children = getChilrenByVTree(VTree2,node)
+        visit.extend(children)
+        for child in children:
+            newE.append((changeTable[node],number))
+            changeTable[child] = number
+            number += 1
+    VTree1 = EtoVTree(newE)
+    return VTree1
+
+def VTree1ToVTree2(VTree):
+    '''
+    转换可能导致拓扑结构不一样
+    :param VTree: [0,1,1,2,2,3,3]
+    :return: [6,6,7,7,0,5,5]
+    '''
+    E = numberTopoByVTree(VTree)
+    return EtoVTree(E)
+
 
 if __name__ == "__main__":
+    VTree = GenTree(3,5)
+    VTree = EtoVTree(numberTopoByVTree(VTree))
+    print(VTree)
+    TreePlot(VTree)
     pass

@@ -1,7 +1,10 @@
-def calInterarrival(dir="/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/end_to_end/sandwich/",load="heavy_load"):
-    sharePathNum = [1,2,4,6,8]
+from tool import *
+
+
+def calInterarrival(dir="/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/end_to_end/sandwich",load="heavy_load"):
+    sharePathNum = [1,2,3,4,5,6,7,8]
     for sPN in sharePathNum:
-        data_dir = dir + load +"/"+ str(sPN)
+        data_dir = dir + "/"+load +"/"+ str(sPN)
         for cnt in range(100):
             filename = data_dir + "/" + load + str(sPN) + "_" + str(cnt) + ".tr"
             print(filename)
@@ -87,8 +90,10 @@ def plot_sandwich(data_dir):
     :param data_dir:
     :return:
     '''
-    LOAD = ["no_traffic","light_load","medium_load","heavy_load"]
-    LABEL = ["no_traffic","9%|0","40%|0","75%|<1%"]
+    # LOAD = ["no_traffic","light_load","medium_load","heavy_load"]
+    # LABEL = ["no_traffic","8%|0","40%|0","75%|<1%"]
+    LOAD = ["light_load","medium_load",]
+    LABEL = ["8%|0","40%|0"]
     PATHNUM = [1,2,3,4,5,6,7,8]
     for load in LOAD:
         curve = get_sandwich(data_dir,load)
@@ -104,3 +109,7 @@ def plot_sandwich(data_dir):
     plt.legend(bbox_to_anchor=(1.0, 1), loc=1, borderaxespad=0.)
     plt.title('Sandwich Probing(interarrival time)', loc='center')
     plt.show()
+
+if __name__ == "__main__":
+    # calInterarrival("/media/zongwangz/RealPAN-13438811621/myUbuntu/data4/end-to-end/sandwich","medium_load")
+    plot_sandwich("/media/zongwangz/RealPAN-13438811621/myUbuntu/data4/end-to-end/sandwich")

@@ -1,4 +1,6 @@
 {
+  "ns3_tool.py::test": true,
   "ns3_tool.py::test_0": true,
-  "ns3_tool.py::test_2": true
+  "ns3_tool.py::test_2": true,
+  "sim_tool.py": true
 }
