@@ -186,7 +186,7 @@ def plot_b2b(data_dir):
     '''
     LOAD = ["medium_load"]
     LABEL = ["40%|0"]
-    PATHNUM = [8]
+    PATHNUM = [1,2,3,4,5,6,7,8]
     for load in LOAD:
         plt.figure(1)
         curve1,curve2 = get_b2b(data_dir, load)
@@ -211,6 +211,7 @@ def plot_b2b(data_dir):
         fig = plt.subplot(122)
         plt.plot(PATHNUM, (np.array(curve1) - np.array(curve2)) / np.array(curve2), 'x-', label="relative error ")
         plt.legend()
+        # plt.savefig()
         plt.show()
         plt.close()
 
@@ -529,7 +530,7 @@ def plotCorrelation(filename,spn):
 
 if __name__ == "__main__":
     # calDelayCov("/media/zongwangz/RealPAN-13438811621/myUbuntu/b2b_improvement/data3/b2b")
-    plot_b2b("/media/zongwangz/RealPAN-13438811621/myUbuntu/b2b_improvement/data3/ibp")
+    plot_b2b("/media/zongwangz/RealPAN-13438811621/myUbuntu/data4/end-to-end/back-to-back/heavy_load")
     # plot_some()
     # effect2("/media/zongwangz/RealPAN-13438811621/myUbuntu/b2b_improvement/data2/b2b/5/back_to_back5_0.tr")
     # effect2("/media/zongwangz/RealPAN-13438811621/myUbuntu/data2/end_to_end/back-to-back/medium_load/3/medium_load3_1.tr")

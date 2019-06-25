@@ -1,45 +1,30 @@
-# -*- coding: utf-8 -*-
 '''
-@project:exp_code
-@author:zongwangz
-@time:19-3-26 上午10:57
-@email:zongwang.zhang@outlook.com
-'''
-
-
-'''
-改进代码 具有更高效率
-先不考虑丢包
+一点代码
 '''
 from tool import *
-
-def CalDelayCov(dir):
-    '''
-    计算路径时延，链路时延，计算路径协方差，计算链路方差，分别保存文件
-    :return:
-    '''
-    sharePathNum = [8]
-    for sPN in sharePathNum:
-        data_dir = dir + "/" + str(sPN)
-        # 若存在文件则删除
-        filename1 = data_dir + "/pathDelayCov" + str(sPN)
-        filename2 = data_dir + "/linkDelayCov" + str(sPN)
-        if os.path.exists(filename1):
-            os.remove(filename1)
-        if os.path.exists(filename2):
-            os.remove(filename2)
-        for cnt in range(10):
-            filename = data_dir + "/" + "improved_b2b" + str(sPN) + "_" + str(cnt) + ".tr"
-            print(filename)
-            if os.path.exists(filename):
-                filename3 = data_dir + "/" + "pathDelay" + str(sPN) + "_" + str(cnt)
-                filename4 = data_dir + "/" + "linkDelay" + str(sPN) + "_" + str(cnt)
-                pathDelayCov, linkDelayCov = calDelayCov(filename,sPN,filename3,filename4)
-                print(pathDelayCov,np.sum(linkDelayCov))
-                open(filename1,"a+").write(str(pathDelayCov))
-                open(filename1, "a+").write("\n")
-                open(filename2,"a+").write(str(linkDelayCov))
-                open(filename2, "a+").write("\n")
+def f1():
+    f1 = "/home/zzw/data/b2b_packetsize/150/1/"+"linkDelayCov1"
+    f2 = "/home/zzw/data/b2b_packetsize/150/1/" + "pathDelayCov1"
+    f3 = "/home/zzw/data/b2b_packetsize/150/1/"+"TlinkDelayCov1"
+    for i in range(100):
+        filename1 = "/home/zzw/data/b2b_packetsize/150/1/"+"linkDelay1_"+str(i)
+        filename2 = "/home/zzw/data/b2b_packetsize/150/1/" + "pathDelay1_" + str(i)
+        filename3 = "/home/zzw/data/b2b_packetsize/150/1/" + "TlinkDelay1_" + str(i)
+        linkdelay = np.loadtxt(filename1)
+        linkdelaycov = Variance_way1(linkdelay)
+        open(f1,"a+").write(str(linkdelaycov))
+        open(f1, "a+").write("\n")
+        pathdelay = np.loadtxt(filename2)
+        pathdelaycov = Covariance_way2(pathdelay[0],pathdelay[1])
+        open(f2, "a+").write(str(pathdelaycov))
+        open(f2, "a+").write("\n")
+        Tlinkdelay = []
+        lines = open(filename3).readlines()
+        for line in lines:
+            Tlinkdelay = (ast.literal_eval(line))
+        Tlinkdelaycov = Variance_way1(Tlinkdelay[0])
+        open(f3, "a+").write(str(Tlinkdelaycov))
+        open(f3, "a+").write("\n")
 
 def calDelayCov(filename,linknum,filename1,filename2):
     '''
@@ -180,27 +165,6 @@ def calDelayCov(filename,linknum,filename1,filename2):
         np.savetxt(filename2,np.array(LINKDELAY))
     return pathdelaycov,linkdelaycov
 
-
-
-def CalTrueLinkCov(dir):
-    sharePathNum = [1,2,3,4,5,6,7,8]
-    for sPN in sharePathNum:
-        data_dir = dir + "/" + str(sPN)
-        # 若存在文件则删除
-        filename1 = data_dir + "/TlinkDelayCov" + str(sPN)
-        if os.path.exists(filename1):
-            os.remove(filename1)
-        for cnt in range(100):
-            filename = data_dir + "/" + "improved_b2b" + str(sPN) + "_" + str(cnt) + ".tr"
-            print(filename)
-            if os.path.exists(filename):
-                filename2 = data_dir + "/" + "TlinkDelay" + str(sPN) + "_" + str(cnt)
-                linkDelayCov = calTrueLinkCov(filename, sPN, filename2)
-                print(np.sum(linkDelayCov))
-                open(filename1, "a+").write(str(linkDelayCov))
-                open(filename1, "a+").write("\n")
-
-
 def calTrueLinkCov(filename,linknum,filename1):
     '''
     计算链路时延方差(背景流)，暂时不考虑丢包，和在queuedisc上的排队时间
@@ -280,48 +244,22 @@ def calTrueLinkCov(filename,linknum,filename1):
         open(filename1,"a+").write("\n")
     return linkdelaycov
 
-
-def plot_b2b(data_dir):
-    '''
-    plot end to end measurement of back to back probing
-    :param data_dir:
-    :return:
-    '''
-    PATHNUM = [1,2,3,4, 5, 6,7,8]
-
-    plt.figure(1)
-    curve1,curve2,curve3 = get_b2b(data_dir+"/b2b")
-    curve4, curve5, curve6 = get_b2b(data_dir + "/ibp")
-    fig = plt.subplot()
-    plt.xlabel('#link on the shared path')
-    plt.ylabel('estimated distance')
-    plt.plot(PATHNUM, curve1, 'o-', label="Covariance (b2b)")
-    plt.plot(PATHNUM, curve2, 'x-', label="sum variance(b2b)")
-    plt.plot(PATHNUM, curve3, 'v-', label="true sum variance(b2b)")
-    plt.plot(PATHNUM, curve4, '.-', label="Covariance (ibp)")
-    plt.plot(PATHNUM, curve5, '<-', label="sum variance(ibp)")
-    plt.plot(PATHNUM, curve6, '>-', label="true sum variance(ibp)")
-
-    plt.legend(bbox_to_anchor=(1.0, 1), loc=1, borderaxespad=0.)
-    plt.title("comparison(40%)")
-    plt.show()
-    plt.close()
-
-
-    plt.figure(2)
-    fig = plt.subplot(121)
-    plt.plot(PATHNUM, np.array(curve3) - np.array(curve2), 'o-', label="absolute error(b2b)")
-    plt.plot(PATHNUM, np.array(curve6) - np.array(curve5), 'o-', label="absolute error(ibp)")
-    plt.legend()
-    fig = plt.subplot(122)
-    plt.plot(PATHNUM, (np.array(curve3) - np.array(curve2)) / np.array(curve2), 'x-', label="relative error(b2b)")
-    plt.plot(PATHNUM, (np.array(curve6) - np.array(curve5)) / np.array(curve5), 'x-', label="relative error(ibp)")
-    plt.legend()
-    plt.show()
-    plt.close()
-
-
-
+def fun2():
+    directory = [150,250,350,450,550,650,750,850,950,1050,1150]
+    for d in directory:
+        dir = "/home/zzw/data/b2b_packetsize/"+str(d)+"/8"
+        filename = dir+"/"+"back_to_back8_99.tr"
+        filename1 = dir+"/"+"pathDelay8_99"
+        filename2 = dir+"/"+"linkDelay8_99"
+        pathdelaycov, linkdelaycov = calDelayCov(filename,8,filename1,filename2)
+        filename3 = dir+"/"+"TlinkDelay8_99"
+        Tlinkdelaycov = calTrueLinkCov(filename,8,filename3)
+        f1 = dir+"/linkDelayCov8"
+        f2 = dir+"/pathDelayCov8"
+        f3 = dir+"/TlinkDelayCov8"
+        open(f1,"a+").write(str(linkdelaycov))
+        open(f2,"a+").write(str(pathdelaycov))
+        open(f3,"a+").write(str(Tlinkdelaycov))
 
 
 def get_b2b(data_dir):
@@ -355,73 +293,47 @@ def get_b2b(data_dir):
 
     return curve1,curve2,curve3
 
-def plotPoint(filename1,filename2):
-    fig = plt.subplot()
-    lines = open(filename1,"r").readline()
-    line = lines[1:-2]
-    linkdelay = ast.literal_eval(line)
-    for item in linkdelay:
-        plt.scatter(1,item)
-    plt.title("b2b")
-    plt.ylim([0.018,0.022])
+def fun3():
+    directory = [50, 150, 250, 350, 450, 550, 650, 750, 850, 950, 1050, 1150]
+    # directory = [50,950]
+    mark = [".","o","v","^","<",">","1","2","3","4","8","s","p","P","*","h","H","+","x","X","D","d","|","_",]
+    for d in directory:
+        dir = "/media/zongwangz/RealPAN-13438811621/myUbuntu/b2b_packetsize/" + str(d)
+        PATHNUM = [1,2,3,4, 5, 6,7,8]
+        curve1,curve2,curve3 = get_b2b(dir)
+        # plt.subplot()
+        # key = "43"+str(directory.index(d)+1)
+        # plt.subplot(int(key))
+        # plt.xlabel('#link on the shared path')
+        # plt.ylabel('estimated distance')
+        # plt.plot(PATHNUM, curve1, 'o-', label="Covariance (b2b)"+str(d))
+        # plt.plot(PATHNUM, curve2, 'x-', label="sum variance(b2b)"+str(d))
+        # plt.plot(PATHNUM, curve3, 'v-', label="true sum variance(b2b)"+str(d))
+        # plt.ylim((0,6e-7))
+        # plt.legend()
+        # plt.title("comparison(40%)")
+        # plt.savefig(dir)
+        # plt.show()
+        # plt.close()
+        plt.subplot()
+        plt.xlabel('#link on the shared path')
+        plt.ylabel('estimated distance')
+        if d == 50:
+            # plt.plot(PATHNUM, (np.array(curve3) - np.array(curve1)),color="black", linewidth=3.0,linestyle="-",
+            #          label="absolute error(b2b)" + str(d))
+            plt.plot(PATHNUM, (np.array(curve3) - np.array(curve1)) / np.array(curve3), color="red", linewidth=3.0, linestyle="-",
+                     label="absolute error(b2b)" + str(d))
+        else:
+            # plt.plot(PATHNUM, (np.array(curve3) - np.array(curve1)), linestyle="--",marker=mark[directory.index(d)], label="absolute error(b2b)"+str(d))
+            plt.plot(PATHNUM, (np.array(curve3) - np.array(curve1)) / np.array(curve3),linestyle="--",marker= mark[directory.index(d)], label="relative error(b2b)"+str(d))
+        plt.legend(loc=2)
     plt.show()
     plt.close()
-
-    fig = plt.subplot()
-    lines = open(filename2, "r").readline()
-    line = lines[1:-2]
-    linkdelay = ast.literal_eval(line)
-    for item in linkdelay:
-        plt.scatter(1, item)
-    plt.title("ibp")
-    plt.ylim([0.018, 0.022])
-    plt.show()
-    plt.close()
-
-def plotBVar(dir):
-    '''
-    画出背景流的方差曲线
-    :param dir:
-    :return:
-    '''
-    data_dir = dir+"/b2b"
-    curve1 = []
-    PATHNUM = [1, 2, 3, 4, 5, 6, 7, 8]
-    for pathNum in PATHNUM:
-        filename1 = data_dir + "/" + str(pathNum) + "/TlinkDelayCov" + str(pathNum)
-        if os.path.exists(filename1):
-            TlinkDelay1 = []
-            lines1 = open(filename1, 'r').readlines()
-            for line in lines1:
-                TlinkDelay1.append(np.sum(ast.literal_eval(line)))
-            curve1.append(np.mean(TlinkDelay1))
-    data_dir = dir+"/ibp"
-    curve2 = []
-    for pathNum in PATHNUM:
-        filename2 = data_dir + "/" + str(pathNum) + "/TlinkDelayCov" + str(pathNum)
-        if os.path.exists(filename2):
-            TlinkDelay2 = []
-            lines2 = open(filename2, 'r').readlines()
-            for line in lines2:
-                TlinkDelay2.append(np.sum(ast.literal_eval(line)))
-            curve2.append(np.mean(TlinkDelay2))
-    fig = plt.subplot()
-    plt.xlabel('#link on the shared path')
-    plt.ylabel('estimated distance')
-    plt.plot(PATHNUM, curve1, 'o-', color = "black",label="true sum variance(b2b)")
-    plt.plot(PATHNUM, curve2, 'x-', label="true sum variance(ibp)")
-    plt.legend()
-    plt.show()
-    plt.close()
-
 if __name__ == "__main__":
-    # CalDelayCov("/media/zongwangz/RealPAN-13438811621/myUbuntu/b2b_improvement/data3/ibp")
-    # CalTrueLinkCov("/media/zongwangz/RealPAN-13438811621/myUbuntu/b2b_improvement/data5/ibp")
-    # pass
-    plot_b2b("/media/zongwangz/RealPAN-13438811621/myUbuntu/b2b_improvement/data5")
-    # plotPoint("/media/zongwangz/RealPAN-13438811621/myUbuntu/b2b_improvement/data5/b2b/1/TlinkDelay1_1","/media/zongwangz/RealPAN-13438811621/myUbuntu/b2b_improvement/data5/ibp/1/TlinkDelay1_1")
-    # plotBVar("/media/zongwangz/RealPAN-13438811621/myUbuntu/b2b_improvement/data5/test")
-    # filename1 = "/media/zongwangz/RealPAN-13438811621/myUbuntu/b2b_improvement/data6/test/1/back_to_back1_0.tr"
-    # filename2 = "/media/zongwangz/RealPAN-13438811621/myUbuntu/b2b_improvement/data6/test/1/pathDelay1_0"
-    # filename3 = "/media/zongwangz/RealPAN-13438811621/myUbuntu/b2b_improvement/data6/test/1/linkDelay1_0"
-    calDelayCov(filename1,1,filename2,filename3)
+    # filename = "/home/zzw/data/b2b_packetsize/150/1/back_to_back1_99.tr"
+    # filename1 = "/home/zzw/data/b2b_packetsize/150/1/pathDelay1_99"
+    # filename2 = "/home/zzw/data/b2b_packetsize/150/1/linkDelay1_99"
+    # calDelayCov(filename,1,filename1,filename2)
+    # filename3 = "/home/zzw/data/b2b_packetsize/150/1/TlinkDelay1_99"
+    # calTrueLinkCov(filename,1,filename3)
+    fun3()
