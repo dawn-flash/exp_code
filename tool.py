@@ -1004,9 +1004,25 @@ def VTree1ToVTree2(VTree):
     return EtoVTree(E)
 
 
+def Levenshtein_Distance_Recursive(str1, str2):
+    if len(str1) == 0:
+        return len(str2)
+    elif len(str2) == 0:
+        return len(str1)
+    elif str1 == str2:
+        return 0
+
+    if str1[len(str1) - 1] == str2[len(str2) - 1]:
+        d = 0
+    else:
+        d = 1
+
+    return min(Levenshtein_Distance_Recursive(str1, str2[:-1]) + 1,
+               Levenshtein_Distance_Recursive(str1[:-1], str2) + 1,
+               Levenshtein_Distance_Recursive(str1[:-1], str2[:-1]) + d)
+
 if __name__ == "__main__":
-    VTree = GenTree(3,5)
-    VTree = EtoVTree(numberTopoByVTree(VTree))
-    print(VTree)
-    TreePlot(VTree)
-    pass
+    E1 = {(0,6),(6,7),(6,8),(7,1),(7,2),(8,3),(8,4),(8,5)}
+    E2 = {(0, 6), (6, 7), (6, 8), (7, 1), (7, 2), (8, 9),(9,3), (9, 4), (8, 5)}
+    dis = calEDbyzss(E1,E2)
+    print(dis)
